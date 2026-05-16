@@ -76,7 +76,8 @@ claude-web/
 ├── requirements.txt    # Python 运行依赖
 ├── install.sh          # 一键安装脚本
 ├── deploy.sh           # 一键安装、启动、健康检查和冒烟测试
-├── start-local.sh      # 启动本地服务，并默认尝试打开公网入口
+├── update.sh           # 拉取最新代码并重新部署
+├── start-local.sh      # 启动本地服务，可按需打开公网入口
 ├── start-public.sh     # 公网入口启动脚本
 ├── static/
 │   ├── index.html      # 主聊天界面
@@ -113,7 +114,6 @@ cd claude-web
 - 安装 / 更新 Python 依赖
 - 初始化 `uploads/`、`logs/`
 - 做基础 Python 语法检查
-- 尝试安装 `ngrok` 到 `~/.local/bin/ngrok`
 
 它不会替你写入 API Key，也不会复制历史数据库。
 
@@ -127,7 +127,24 @@ chmod +x deploy.sh
 ./deploy.sh
 ```
 
-`deploy.sh` 会自动准备 Python 环境、安装依赖、做语法编译检查、启动本地服务和默认 ngrok 公网入口、启用 Termux 监控任务，并运行 `scripts/smoke_test.py` 验证健康检查、会话列表、全局关键词搜索、单会话关键词搜索和 Markdown 导出。
+`deploy.sh` 会自动准备 Python 环境、安装依赖、做语法编译检查、启动本地服务、启用可用的 Termux 监控任务，并运行 `scripts/smoke_test.py` 验证健康检查、会话列表、全局关键词搜索、单会话关键词搜索和 Markdown 导出。
+
+服务器部署默认不启动 ngrok。对外访问建议使用 Nginx、Caddy、宝塔反代或云服务器安全组，把公网域名反向代理到：
+
+```text
+http://127.0.0.1:8000
+```
+
+### 更新到最新版
+
+后续更新项目时，在服务器项目目录执行：
+
+```bash
+cd /home/ai/claude-web
+./update.sh
+```
+
+`update.sh` 会拉取 `origin/main` 最新代码，只允许 fast-forward 更新，然后自动调用 `./deploy.sh` 完成依赖更新、重启服务和冒烟测试。`.env`、`chat.db`、`uploads/`、`logs/` 等本地运行数据默认不会被提交，也不会被更新脚本覆盖。
 
 ### 2. 配置联网搜索与网页提取
 
@@ -158,14 +175,14 @@ cd /ai/claude-web
 
 ```text
 http://127.0.0.1:8000/
-https://kindling-shaft-creamer.ngrok-free.dev
 ```
 
-如果要让固定公网域名自动可用，首次部署前先提供 ngrok token：
+如果要让 ngrok 公网入口可用，首次部署前先提供 ngrok token：
 
 ```bash
 export NGROK_AUTHTOKEN="你的 ngrok token"
-./install.sh
+BOOTSTRAP_INSTALL_NGROK=1 ./install.sh
+START_PUBLIC=1 ./start-local.sh
 ```
 
 首次启动会自动创建新的 `chat.db`。API 接入商建议在 Web 界面中配置；不要把 `.env`、`chat.db`、`uploads/` 提交到公开仓库。
@@ -186,8 +203,8 @@ cd /ai/claude-web
 - 关闭 access log，减少手机环境下的日志压力
 - 写入 `logs/uvicorn-local.log`
 - 等待 `/api/health` 可用
-- 自动调用 `start-public.sh`，打开固定 ngrok 公网入口
-- 把公网地址写入 `ngrok-url.txt`
+- 当 `START_PUBLIC=1` 时调用 `start-public.sh` 打开公网入口
+- 公网入口可用时把地址写入 `ngrok-url.txt`
 - 如果公网隧道启动失败，本地服务仍会保持运行并输出提示
 
 手动启动：
@@ -206,13 +223,13 @@ curl http://127.0.0.1:8000/api/health
 
 ## 公网访问
 
-项目启动脚本默认会启动本地服务并打开固定 ngrok 公网入口。如果需要换成其它公网方案，建议使用 Nginx、Caddy、SSH tunnel、Cloudflare Tunnel 或其它受控反向代理，并先处理认证、CORS 和 API Key 安全。
+项目启动脚本默认只启动本地服务。服务器部署建议使用 Nginx、Caddy、宝塔反代、云服务器安全组、SSH tunnel、Cloudflare Tunnel 或其它受控反向代理对外提供访问，并先处理认证、CORS 和 API Key 安全。
 
-固定 ngrok 域名需要已配置 ngrok 账号 token。如果 `./start-local.sh` 提示公网隧道未启动，本地入口 `http://127.0.0.1:8000/` 仍然可用；配置 `NGROK_AUTHTOKEN` 后重新运行 `./install.sh` 和 `./start-local.sh` 即可。
+固定 ngrok 域名需要已配置 ngrok 账号 token。如果 `./start-local.sh` 提示公网隧道未启动，本地入口 `http://127.0.0.1:8000/` 仍然可用；配置 `NGROK_AUTHTOKEN` 后重新运行 `BOOTSTRAP_INSTALL_NGROK=1 ./install.sh` 和 `START_PUBLIC=1 ./start-local.sh` 即可。
 
-### 默认公网启动
+### ngrok 公网启动
 
-当前 `./start-local.sh` 已默认打开固定 ngrok 域名；也可以直接运行公网脚本：
+如需使用 ngrok，可以直接运行公网脚本：
 
 ```bash
 cd /home/ai/claude-web
@@ -461,7 +478,8 @@ logs/ngrok.log
 ### 7. 部署与公网
 
 - 本地 `FastAPI` 服务
-- 默认启动脚本可同时尝试拉起固定 ngrok 公网入口
+- 服务器部署默认只启动本地服务
+- 可按需启动 ngrok 或 Cloudflare Tunnel 公网入口
 - 支持 Cloudflare Tunnel
 - 自带健康检查和日志文件
 
