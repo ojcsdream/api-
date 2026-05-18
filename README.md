@@ -81,6 +81,7 @@ curl http://127.0.0.1:8000/api/health
 ```bash
 TAVILY_API_KEY="你的 Tavily key"
 SERPAPI_API_KEY="你的 SerpAPI key"
+GITHUB_TOKEN="可选：用于读取私有 GitHub 仓库"
 NGROK_AUTHTOKEN="你的 ngrok token"
 HOST="0.0.0.0"
 PORT="8000"
@@ -89,6 +90,7 @@ PORT="8000"
 说明：
 
 - API 接入商 key 建议在网页设置里配置，不建议写死到代码。
+- 如果要让 GitHub MCP 读取私有仓库，必须配置有仓库读取权限的 `GITHUB_TOKEN` 或 `GH_TOKEN`。
 - `.env`、`chat.db`、`uploads/`、`logs/` 默认不应提交到 Git。
 - 没有 Tavily / SerpAPI 时，普通聊天仍可使用，只是后端自主搜索能力会下降。
 
