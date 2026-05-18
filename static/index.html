@@ -11,6 +11,7 @@
   <link rel="manifest" href="/static/manifest.webmanifest" />
   <link rel="icon" href="/static/icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/static/icons/icon.svg" />
+  <link rel="stylesheet" href="/static/css/chatgpt-like-output.css" />
   <title>Claude Web</title>
 
   <script>
@@ -51,6 +52,7 @@
   <script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/common.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <script defer src="/static/js/chatgpt-like-output.js"></script>
 
   <style>
     * { box-sizing: border-box; }
@@ -86,29 +88,29 @@
     }
 
     html[data-theme="light"] {
-      --ui-bg: #f5f5f7;
-      --ui-bg-soft: rgba(37, 33, 28, 0.035);
-      --ui-panel: rgba(255, 255, 255, 0.82);
-      --ui-panel-strong: rgba(255, 255, 255, 0.96);
-      --ui-border: rgba(42, 37, 31, 0.10);
-      --ui-border-strong: rgba(42, 37, 31, 0.16);
-      --ui-text: #25221e;
-      --ui-muted: #716b62;
-      --ui-dim: #9b9489;
-      --ui-accent: #7657e8;
-      --ui-accent-ink: #ffffff;
-      --ui-glow: 0 18px 54px rgba(28, 28, 35, 0.08);
-      --glass-bg: rgba(255, 255, 255, 0.72);
-      --glass-bg-deep: rgba(255, 255, 255, 0.86);
-      --glass-bg-soft: rgba(38, 33, 27, 0.035);
-      --glass-bg-surface: rgba(255, 255, 255, 0.58);
-      --glass-border: rgba(44, 38, 31, 0.10);
-      --glass-border-soft: rgba(44, 38, 31, 0.065);
-      --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.80);
-      --glass-highlight-strong: inset 0 1px 0 rgba(255, 255, 255, 0.92);
-      --glass-shadow-sm: 0 4px 16px rgba(28, 28, 35, 0.045);
-      --glass-shadow-md: 0 14px 36px rgba(28, 28, 35, 0.065);
-      --glass-shadow-lg: 0 20px 60px rgba(28, 28, 35, 0.085);
+      --ui-bg: #faf6ef;
+      --ui-bg-soft: rgba(91, 68, 44, 0.045);
+      --ui-panel: rgba(255, 251, 243, 0.82);
+      --ui-panel-strong: rgba(255, 253, 247, 0.96);
+      --ui-border: rgba(92, 68, 45, 0.11);
+      --ui-border-strong: rgba(92, 68, 45, 0.18);
+      --ui-text: #302821;
+      --ui-muted: #74685b;
+      --ui-dim: #a09284;
+      --ui-accent: #c96442;
+      --ui-accent-ink: #fff8ef;
+      --ui-glow: 0 18px 54px rgba(105, 74, 44, 0.10);
+      --glass-bg: rgba(255, 250, 241, 0.76);
+      --glass-bg-deep: rgba(255, 251, 244, 0.90);
+      --glass-bg-soft: rgba(91, 68, 44, 0.045);
+      --glass-bg-surface: rgba(255, 250, 241, 0.62);
+      --glass-border: rgba(92, 68, 45, 0.11);
+      --glass-border-soft: rgba(92, 68, 45, 0.07);
+      --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.76);
+      --glass-highlight-strong: inset 0 1px 0 rgba(255, 255, 255, 0.90);
+      --glass-shadow-sm: 0 4px 16px rgba(105, 74, 44, 0.045);
+      --glass-shadow-md: 0 14px 36px rgba(105, 74, 44, 0.070);
+      --glass-shadow-lg: 0 20px 60px rgba(105, 74, 44, 0.095);
     }
 
     html, body {
@@ -159,7 +161,7 @@
       border: 1px solid transparent;
       background: rgba(255,255,255,0.03);
       color: #ddd7cb;
-      font-size: 28px;
+      font-size: 22px;
       border-radius: 12px;
     }
 
@@ -219,8 +221,8 @@
 
     .theme-toggle {
       position: relative;
-      width: 58px;
-      height: 34px;
+      width: 46px;
+      height: 26px;
       border-radius: 999px;
       border: 1px solid rgba(255,255,255,0.10);
       background:
@@ -243,12 +245,12 @@
       position: absolute;
       top: 3px;
       left: 3px;
-      width: 28px;
-      height: 28px;
+      width: 20px;
+      height: 20px;
       border-radius: 999px;
       background: rgba(232, 220, 200, 0.92);
       box-shadow: 0 8px 18px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.45);
-      transform: translateX(24px);
+      transform: translateX(20px);
       transition: transform .34s cubic-bezier(.22, 1, .36, 1), background .24s ease, box-shadow .24s ease;
     }
 
@@ -512,7 +514,6 @@
       to {
         opacity: 1;
         transform: translateY(0) scale(1);
-        filter: blur(0);
       }
     }
 
@@ -655,18 +656,75 @@
 
     .stream-caret {
       display: inline-block;
-      width: 0.16em;
-      height: 1.02em;
-      margin-left: 0.1em;
+      width: 0.17em;
+      height: 1.04em;
+      margin-left: 0.12em;
       border-radius: 999px;
-      background: rgba(230, 220, 202, 0.55);
-      vertical-align: -0.12em;
-      animation: streamCaretBlink 1.25s ease-in-out infinite;
+      background: rgba(230, 220, 202, 0.64);
+      box-shadow: 0 0 12px rgba(230, 220, 202, 0.22);
+      vertical-align: -0.13em;
+      transform-origin: center bottom;
+      animation: streamCaretBlink 1.08s ease-in-out infinite;
     }
 
     @keyframes streamCaretBlink {
-      0%, 42% { opacity: 0.5; }
-      50%, 100% { opacity: 0.14; }
+      0%, 38% { opacity: 0.72; transform: scaleY(1); }
+      50%, 100% { opacity: 0.18; transform: scaleY(0.72); }
+    }
+
+    .flowtoken-token,
+    .chatgpt-like-token {
+      display: inline-block;
+      animation:
+        chatgptLikeInlineReveal 680ms cubic-bezier(0.16, 1, 0.3, 1) both,
+        chatgptLikeInlineGlow 860ms cubic-bezier(0.22, 1, 0.36, 1) both;
+      animation-delay: var(--chatgpt-like-token-delay, var(--flowtoken-delay, 0ms)), var(--chatgpt-like-token-delay, var(--flowtoken-delay, 0ms));
+      will-change: opacity, transform, filter, text-shadow;
+      transform-origin: 50% 85%;
+    }
+
+    .stream-stable,
+    .stream-active {
+      display: contents;
+    }
+
+    @keyframes chatgptLikeInlineReveal {
+      0% {
+        opacity: 0;
+        filter: blur(3px);
+        transform: translateY(0.42em) scale(0.985);
+      }
+      42% {
+        opacity: 0.78;
+        filter: blur(1px);
+        transform: translateY(-0.035em) scale(1.006);
+      }
+      100% {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes chatgptLikeInlineGlow {
+      0% {
+        text-shadow: 0 0 0 rgba(230, 220, 202, 0);
+      }
+      42% {
+        text-shadow:
+          0 0 9px rgba(255, 246, 220, 0.26),
+          0 0 16px rgba(177, 149, 96, 0.14);
+      }
+      100% {
+        text-shadow: 0 0 0 rgba(230, 220, 202, 0);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .flowtoken-token,
+      .chatgpt-like-token {
+        animation: none;
+      }
     }
 
     @media (max-width: 760px) {
@@ -709,24 +767,38 @@
       padding: 0.02em 0.28em;
     }
 
-    .assistant .bubble .math-source-pending {
-      opacity: 0;
-      color: transparent;
-      pointer-events: none;
-      user-select: none;
+    .assistant .bubble .math-source {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      letter-spacing: 0;
     }
 
-    .assistant .bubble .math-source-display.math-source-pending {
+    .assistant .bubble .math-source-display {
       display: block;
-      min-height: 3.8em;
-      margin: 0.9em 0;
+      min-height: 2.7em;
+      margin: 0.72em 0;
+      padding: 0.64em 0.78em;
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.075);
+      background: rgba(255,255,255,0.035);
+      color: #f7f0e5;
+      white-space: pre;
     }
 
-    .assistant .bubble .math-source-inline.math-source-pending {
+    .assistant .bubble .math-source-inline {
       display: inline-block;
-      min-width: 2.6em;
-      min-height: 1.2em;
+      min-width: 1.2em;
+      min-height: 1.1em;
+      padding: 0 0.16em;
+      color: #f5dfb5;
+      white-space: nowrap;
       vertical-align: -0.12em;
+    }
+
+    .assistant .bubble .math-source-pending {
+      opacity: 0.92;
+      pointer-events: auto;
+      user-select: text;
     }
 
     .assistant .bubble h1,
@@ -1030,8 +1102,8 @@
     }
 
     .small-btn {
-      width: 28px;
-      height: 28px;
+      width: 20px;
+      height: 20px;
       border-radius: 999px;
       border: 1px solid rgba(255,255,255,0.06);
       background: rgba(255,255,255,0.03);
@@ -1088,7 +1160,7 @@
 
     .thinking-panel:hover {
       opacity: 0.98;
-      transform: translateY(-1px);
+      transform: none;
     }
 
     .thinking-panel::after {
@@ -1300,7 +1372,7 @@
     .thinking-toggle::after {
       content: "⌄";
       display: inline-block;
-      transform: translateY(-1px);
+      transform: none;
       transition: transform .22s ease;
     }
 
@@ -1644,6 +1716,12 @@
       margin-bottom: 14px;
       padding: 6px 4px 12px;
       border-bottom: 1px solid rgba(232, 220, 200, 0.15);
+    }
+
+    .drawer-head-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .drawer-title {
@@ -2109,18 +2187,18 @@
   <style id="light-theme-style">
     html[data-theme="light"] body {
       background:
-        radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.86), rgba(255,255,255,0) 34%),
-        linear-gradient(180deg, #f7f7fa 0%, #f4f4f8 100%);
+        radial-gradient(circle at 50% 0%, rgba(255, 253, 247, 0.88), rgba(255,253,247,0) 34%),
+        linear-gradient(180deg, #fdf9f2 0%, #f8f1e7 100%);
       color: var(--ui-text);
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang SC", "Noto Sans SC", "Segoe UI", sans-serif;
     }
 
     html[data-theme="light"] .topbar {
       background:
-        linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.44)),
-        rgba(247, 247, 250, 0.64);
-      border-bottom-color: rgba(40, 35, 28, 0.055);
-      box-shadow: 0 10px 30px rgba(65, 54, 40, 0.045), inset 0 -1px 0 rgba(255,255,255,0.52);
+        linear-gradient(180deg, rgba(255,251,243,0.86), rgba(255,246,232,0.48)),
+        rgba(250, 241, 226, 0.66);
+      border-bottom-color: rgba(96, 70, 43, 0.06);
+      box-shadow: 0 10px 30px rgba(105, 74, 44, 0.05), inset 0 -1px 0 rgba(255,255,255,0.50);
     }
 
     html[data-theme="light"] .menu-btn,
@@ -2129,16 +2207,16 @@
     html[data-theme="light"] .theme-toggle {
       border-color: rgba(38, 33, 27, 0.085);
       background:
-        linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.54)),
-        rgba(255, 255, 255, 0.74);
-      color: #565049;
-      box-shadow: 0 7px 18px rgba(55, 45, 33, 0.055), inset 0 1px 0 rgba(255,255,255,0.84);
+        linear-gradient(180deg, rgba(255,253,248,0.94), rgba(255,246,234,0.58)),
+        rgba(255, 250, 241, 0.76);
+      color: #5c5146;
+      box-shadow: 0 7px 18px rgba(105, 74, 44, 0.055), inset 0 1px 0 rgba(255,255,255,0.80);
     }
 
     html[data-theme="light"] .theme-toggle::before {
       transform: translateX(0);
-      background: #25221e;
-      box-shadow: 0 8px 18px rgba(55, 45, 33, 0.15), inset 0 1px 0 rgba(255,255,255,0.14);
+      background: #3a3028;
+      box-shadow: 0 8px 18px rgba(93, 63, 35, 0.18), inset 0 1px 0 rgba(255,255,255,0.14);
     }
 
     html[data-theme="light"] .theme-toggle .sun-icon {
@@ -2148,7 +2226,7 @@
     }
 
     html[data-theme="light"] .theme-toggle .moon-icon {
-      color: rgba(78, 70, 60, 0.52);
+      color: rgba(87, 70, 54, 0.52);
       opacity: 0.5;
       transform: rotate(-12deg) scale(0.86);
     }
@@ -2157,11 +2235,11 @@
     html[data-theme="light"] .assistant .bubble h1,
     html[data-theme="light"] .assistant .bubble h2,
     html[data-theme="light"] .assistant .bubble h3 {
-      color: #25221e;
+      color: #312820;
     }
 
     html[data-theme="light"] .assistant .bubble {
-      color: #171719;
+      color: #2f271f;
       font-weight: 560;
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
@@ -2170,9 +2248,9 @@
     html[data-theme="light"] .user .bubble {
       background:
         linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.58)),
-        rgba(255,255,252,0.72);
-      color: #27241f;
-      border-color: rgba(42, 37, 31, 0.10);
+        rgba(255,255,250,0.72);
+      color: #332a22;
+      border-color: rgba(92, 68, 45, 0.11);
       box-shadow: var(--glass-shadow-md), var(--glass-highlight);
     }
 
@@ -2188,19 +2266,19 @@
     html[data-theme="light"] .assistant .bubble th,
     html[data-theme="light"] .source-chip-title,
     html[data-theme="light"] .system-prompt-title {
-      color: #37322b;
+      color: #43362b;
     }
 
     html[data-theme="light"] .assistant .bubble p,
     html[data-theme="light"] .assistant .bubble li,
     html[data-theme="light"] .assistant .bubble td {
-      color: #171719;
+      color: #2f271f;
       font-weight: 560;
     }
 
     html[data-theme="light"] .assistant .bubble strong,
     html[data-theme="light"] .assistant .bubble b {
-      color: #111114;
+      color: #241d17;
       font-weight: 740;
     }
 
@@ -2212,24 +2290,24 @@
     html[data-theme="light"] .thinking-query,
     html[data-theme="light"] .thinking-toggle,
     html[data-theme="light"] .tool-status {
-      color: #786f63;
+      color: #7d6f60;
     }
 
     html[data-theme="light"] .assistant .bubble li::marker,
     html[data-theme="light"] .assistant .bubble sup a,
     html[data-theme="light"] .assistant .bubble .footnote-ref,
     html[data-theme="light"] .assistant .bubble a {
-      color: #5f7f9d;
+      color: #9b563d;
     }
 
     html[data-theme="light"] .assistant .bubble :not(pre) > code {
-      background: rgba(48, 42, 34, 0.055);
-      border-color: rgba(48, 42, 34, 0.09);
-      color: #6f5431;
+      background: rgba(190, 110, 24, 0.13);
+      border-color: rgba(190, 110, 24, 0.24);
+      color: #935600;
     }
 
     html[data-theme="light"] .composer {
-      background: linear-gradient(180deg, rgba(245,245,247,0), rgba(245,245,247,0.52) 48%, rgba(245,245,247,0.94));
+      background: linear-gradient(180deg, rgba(250,246,239,0), rgba(250,246,239,0.54) 48%, rgba(250,246,239,0.96));
     }
 
     html[data-theme="light"] .composer-inner,
@@ -2239,17 +2317,17 @@
     html[data-theme="light"] .source-chip,
     html[data-theme="light"] .session-menu {
       background:
-        linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.48)),
-        rgba(255,255,255,0.72);
-      border-color: rgba(42, 37, 31, 0.09);
+        linear-gradient(180deg, rgba(255,253,248,0.86), rgba(255,247,235,0.52)),
+        rgba(255,250,241,0.74);
+      border-color: rgba(92, 68, 45, 0.10);
       box-shadow: var(--glass-shadow-md), var(--glass-highlight);
     }
 
     html[data-theme="light"] .composer-inner:focus-within,
     html[data-theme="light"] body.welcome-mode .composer-inner:focus-within,
     html[data-theme="light"] body.welcome-mode .composer-inner:hover {
-      border-color: rgba(42, 37, 31, 0.15);
-      box-shadow: 0 16px 40px rgba(58, 48, 36, 0.11), var(--glass-highlight-strong);
+      border-color: rgba(154, 94, 57, 0.22);
+      box-shadow: 0 16px 40px rgba(105, 74, 44, 0.12), var(--glass-highlight-strong);
     }
 
     html[data-theme="light"] textarea,
@@ -2259,13 +2337,13 @@
     html[data-theme="light"] .conversation-search-input,
     html[data-theme="light"] .content-search-input,
     html[data-theme="light"] .session-search {
-      background: rgba(255,255,255,0.62);
-      border-color: rgba(42, 37, 31, 0.10);
-      color: #26231f;
+      background: rgba(255,250,241,0.68);
+      border-color: rgba(92, 68, 45, 0.11);
+      color: #312820;
     }
 
     html[data-theme="light"] textarea::placeholder {
-      color: rgba(55, 49, 42, 0.43);
+      color: rgba(74, 61, 49, 0.46);
     }
 
     html[data-theme="light"] .plus-btn,
@@ -2277,9 +2355,9 @@
     html[data-theme="light"] .pin-btn,
     html[data-theme="light"] .session-more-btn,
     html[data-theme="light"] .switch-btn {
-      background: rgba(255,255,255,0.58);
-      border-color: rgba(42, 37, 31, 0.085);
-      color: #6f685f;
+      background: rgba(255,250,241,0.62);
+      border-color: rgba(92, 68, 45, 0.09);
+      color: #746659;
     }
 
     html[data-theme="light"] .model-pill,
@@ -2289,7 +2367,7 @@
     html[data-theme="light"] .system-prompt-preview,
     html[data-theme="light"] .source-chip-url,
     html[data-theme="light"] .empty {
-      color: #7a7167;
+      color: #7d7063;
     }
 
     html[data-theme="light"] .session-item,
@@ -2298,36 +2376,36 @@
     html[data-theme="light"] .search-result-item,
     html[data-theme="light"] .system-prompt-item {
       background:
-        linear-gradient(180deg, rgba(255,255,255,0.84), rgba(255,255,255,0.44)),
-        rgba(255,255,252,0.56);
-      border-color: rgba(42, 37, 31, 0.08);
-      color: #413b34;
+        linear-gradient(180deg, rgba(255,253,248,0.86), rgba(255,247,235,0.48)),
+        rgba(255,250,241,0.58);
+      border-color: rgba(92, 68, 45, 0.09);
+      color: #493d32;
     }
 
     html[data-theme="light"] .session-item.active,
     html[data-theme="light"] .model-choice.active,
     html[data-theme="light"] .top-search-btn.active,
     html[data-theme="light"] .web-search-btn.active {
-      background: rgba(38, 34, 29, 0.08);
-      border-color: rgba(38, 34, 29, 0.15);
-      color: #26231f;
+      background: rgba(201, 100, 66, 0.12);
+      border-color: rgba(201, 100, 66, 0.24);
+      color: #33261f;
     }
 
     html[data-theme="light"] mjx-container,
     html[data-theme="light"] .assistant .bubble mjx-container {
-      color: #2d2924 !important;
+      color: #332a22 !important;
     }
 
     html[data-theme="light"] body.welcome-mode,
     html[data-theme="light"] {
-      --claude-bg: #f5f5f7;
-      --claude-panel: #ffffff;
-      --claude-border: rgba(42, 37, 31, 0.09);
-      --claude-text: #2b2823;
-      --claude-muted: #746d64;
-      --claude-dim: #9d958a;
-      --claude-accent: #7657e8;
-      --claude-pill: #ffffff;
+      --claude-bg: #faf6ef;
+      --claude-panel: #fffaf1;
+      --claude-border: rgba(92, 68, 45, 0.10);
+      --claude-text: #332a22;
+      --claude-muted: #786b5d;
+      --claude-dim: #a09284;
+      --claude-accent: #c96442;
+      --claude-pill: #fffaf1;
     }
 
     html[data-theme="light"] body.welcome-mode .topbar {
@@ -2338,43 +2416,43 @@
 
     html[data-theme="light"] body.welcome-mode .menu-btn,
     html[data-theme="light"] body.welcome-mode .share-btn {
-      color: rgba(57, 51, 44, 0.68);
+      color: rgba(74, 61, 49, 0.70);
       background: transparent;
       box-shadow: none;
     }
 
     html[data-theme="light"] body.welcome-mode .composer-inner {
       background:
-        linear-gradient(180deg, rgba(255,255,255,0.86), rgba(255,255,255,0.58)),
-        rgba(255,255,255,0.72);
-      border-color: rgba(42, 37, 31, 0.085);
-      box-shadow: 0 18px 54px rgba(28, 28, 35, 0.08), var(--glass-highlight);
+        linear-gradient(180deg, rgba(255,253,248,0.88), rgba(255,247,235,0.62)),
+        rgba(255,250,241,0.76);
+      border-color: rgba(92, 68, 45, 0.10);
+      box-shadow: 0 18px 54px rgba(105, 74, 44, 0.10), var(--glass-highlight);
     }
 
     html[data-theme="light"] body.welcome-mode textarea {
-      color: rgba(43, 40, 35, 0.88);
+      color: rgba(51, 42, 34, 0.90);
     }
 
     html[data-theme="light"] body.welcome-mode textarea::placeholder {
-      color: rgba(43, 40, 35, 0.42);
+      color: rgba(74, 61, 49, 0.44);
     }
 
     html[data-theme="light"] body.welcome-mode .plus-btn,
     html[data-theme="light"] body.welcome-mode .web-search-btn,
     html[data-theme="light"] body.welcome-mode .send-btn {
-      color: rgba(62, 56, 49, 0.70);
-      background: rgba(39, 35, 30, 0.045);
+      color: rgba(80, 67, 54, 0.72);
+      background: rgba(105, 74, 44, 0.055);
     }
 
     html[data-theme="light"] body.welcome-mode.has-input .send-btn {
-      background: rgba(37, 34, 30, 0.90);
-      color: #ffffff;
+      background: rgba(55, 45, 36, 0.92);
+      color: #fff8ef;
     }
 
     html[data-theme="light"] .drawer {
-      background: #f5f5f7;
+      background: #faf6ef;
       border-right: 0;
-      box-shadow: 20px 0 60px rgba(28, 28, 35, 0.13);
+      box-shadow: 20px 0 60px rgba(105, 74, 44, 0.14);
       -webkit-backdrop-filter: none;
       backdrop-filter: none;
     }
@@ -2390,65 +2468,64 @@
     }
 
     html[data-theme="light"] .drawer-head {
-      min-height: 72px;
-      align-items: center;
-      margin: 0 0 18px;
-      padding: 0 4px 8px;
-      border-bottom: 0;
+      align-items: flex-start;
+      margin-bottom: 14px;
+      padding: 6px 4px 12px;
+      border-bottom: 1px solid rgba(92, 68, 45, 0.12);
     }
 
     html[data-theme="light"] .drawer-title {
-      color: #111114;
+      color: #241d17;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif;
-      font-size: 24px;
-      font-weight: 780;
+      font-size: 21px;
+      font-weight: 650;
       letter-spacing: 0;
     }
 
     html[data-theme="light"] .drawer-sub {
-      margin-top: 6px;
-      color: #85858f;
-      font-size: 13px;
-      font-weight: 620;
+      margin-top: 4px;
+      color: #8a7c6d;
+      font-size: 12px;
+      font-weight: 500;
     }
 
     html[data-theme="light"] .close-btn {
-      width: 46px;
-      height: 46px;
-      border: 1px solid rgba(255,255,255,0.72);
-      background: rgba(255,255,255,0.64);
-      color: #151518;
-      font-size: 28px;
-      box-shadow: 0 10px 24px rgba(42, 39, 49, 0.08), inset 0 1px 0 rgba(255,255,255,0.9);
+      width: 36px;
+      height: 36px;
+      border: 1px solid rgba(255,250,241,0.72);
+      background: rgba(255,250,241,0.66);
+      color: #2c241d;
+      font-size: 22px;
+      box-shadow: 0 10px 24px rgba(105, 74, 44, 0.08), inset 0 1px 0 rgba(255,255,255,0.86);
     }
 
     html[data-theme="light"] .section {
-      margin-bottom: 20px;
-      padding: 18px;
-      border: 0;
-      border-radius: 30px;
-      background: rgba(255,255,255,0.82);
-      box-shadow: 0 14px 34px rgba(38, 35, 45, 0.055), inset 0 1px 0 rgba(255,255,255,0.86);
+      margin-bottom: 16px;
+      padding: 13px;
+      border: 1px solid rgba(92, 68, 45, 0.08);
+      border-radius: 16px;
+      background: rgba(255,250,241,0.84);
+      box-shadow: 0 14px 34px rgba(105, 74, 44, 0.060), inset 0 1px 0 rgba(255,255,255,0.82);
       -webkit-backdrop-filter: none;
       backdrop-filter: none;
     }
 
     html[data-theme="light"] .section-title {
-      margin: 2px 0 14px;
-      color: #7d7d87;
-      font-size: 16px;
-      font-weight: 760;
+      margin: 0 0 12px;
+      color: #8a7c6d;
+      font-size: 12px;
+      font-weight: 700;
     }
 
     html[data-theme="light"] .field {
-      margin-bottom: 18px;
+      margin-bottom: 10px;
     }
 
     html[data-theme="light"] .field label {
-      margin: 0 0 9px 40px;
-      color: #85858f;
-      font-size: 16px;
-      font-weight: 760;
+      margin: 0 0 5px;
+      color: #8a7c6d;
+      font-size: 12px;
+      font-weight: 600;
       letter-spacing: 0;
     }
 
@@ -2458,20 +2535,20 @@
     html[data-theme="light"] .session-search,
     html[data-theme="light"] .content-search-input,
     html[data-theme="light"] .conversation-search-input {
-      min-height: 58px;
-      border: 0;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.96);
-      color: #111114;
-      font-size: 18px;
+      min-height: 40px;
+      border: 1px solid rgba(92, 68, 45, 0.10);
+      border-radius: 11px;
+      background: rgba(255,253,248,0.96);
+      color: #241d17;
+      font-size: 14px;
       font-weight: 500;
-      padding: 0 22px;
-      box-shadow: inset 0 0 0 1px rgba(26, 24, 32, 0.025), 0 10px 24px rgba(42, 39, 49, 0.035);
+      padding: 0 10px;
+      box-shadow: inset 0 0 0 1px rgba(58, 42, 28, 0.030), 0 10px 24px rgba(105, 74, 44, 0.040);
     }
 
     html[data-theme="light"] .field textarea {
-      border-radius: 28px;
-      padding: 16px 20px;
+      border-radius: 11px;
+      padding: 10px;
     }
 
     html[data-theme="light"] .field input::placeholder,
@@ -2479,7 +2556,7 @@
     html[data-theme="light"] .session-search::placeholder,
     html[data-theme="light"] .content-search-input::placeholder,
     html[data-theme="light"] .conversation-search-input::placeholder {
-      color: rgba(128, 128, 137, 0.46);
+      color: rgba(124, 108, 93, 0.50);
     }
 
     html[data-theme="light"] .field input:focus,
@@ -2488,7 +2565,7 @@
     html[data-theme="light"] .session-search:focus,
     html[data-theme="light"] .content-search-input:focus,
     html[data-theme="light"] .conversation-search-input:focus {
-      box-shadow: inset 0 0 0 2px rgba(112, 92, 205, 0.18), 0 12px 28px rgba(42, 39, 49, 0.055);
+      box-shadow: inset 0 0 0 2px rgba(201, 100, 66, 0.20), 0 12px 28px rgba(105, 74, 44, 0.060);
     }
 
     html[data-theme="light"] .drawer-btn,
@@ -2496,75 +2573,75 @@
     html[data-theme="light"] .session-item,
     html[data-theme="light"] .search-result-item,
     html[data-theme="light"] .system-prompt-item {
-      min-height: 54px;
-      border: 0;
-      border-radius: 24px;
-      background: rgba(255,255,255,0.90);
-      color: #111114;
-      padding: 13px 18px;
-      font-size: 16px;
+      min-height: 40px;
+      border: 1px solid rgba(92, 68, 45, 0.08);
+      border-radius: 12px;
+      background: rgba(255,253,248,0.90);
+      color: #241d17;
+      padding: 9px 11px;
+      font-size: 14px;
       font-weight: 560;
-      box-shadow: 0 10px 22px rgba(42, 39, 49, 0.035), inset 0 1px 0 rgba(255,255,255,0.86);
+      box-shadow: 0 10px 22px rgba(105, 74, 44, 0.040), inset 0 1px 0 rgba(255,255,255,0.82);
     }
 
     html[data-theme="light"] .drawer-btn:hover,
     html[data-theme="light"] .model-choice:hover,
     html[data-theme="light"] .session-item:hover,
     html[data-theme="light"] .search-result-item:hover {
-      background: #ffffff;
-      color: #111114;
-      transform: translateY(-1px);
+      background: #fffaf1;
+      color: #241d17;
+      transform: none;
     }
 
     html[data-theme="light"] .model-choice.active,
     html[data-theme="light"] .session-item.active {
-      background: #111114;
-      color: #fff;
-      box-shadow: 0 12px 26px rgba(17, 17, 20, 0.16);
+      background: #3a3028;
+      color: #fff8ef;
+      box-shadow: none;
     }
 
     html[data-theme="light"] .section-title-btn,
     html[data-theme="light"] .new-conv-icon,
     html[data-theme="light"] .pin-btn,
     html[data-theme="light"] .session-more-btn {
-      border: 0;
-      background: rgba(255,255,255,0.88);
-      color: #5f46c8;
+      border: 1px solid rgba(92, 68, 45, 0.08);
+      background: rgba(255,253,248,0.72);
+      color: #a65338;
       border-radius: 999px;
-      box-shadow: 0 9px 20px rgba(42, 39, 49, 0.045), inset 0 1px 0 rgba(255,255,255,0.88);
+      box-shadow: 0 9px 20px rgba(105, 74, 44, 0.050), inset 0 1px 0 rgba(255,255,255,0.84);
     }
 
     html[data-theme="light"] .switch-btn {
-      width: 58px;
-      height: 34px;
+      width: 46px;
+      height: 26px;
       padding: 3px;
       border: 0;
       border-radius: 999px;
-      background: #d6d6dd;
-      box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
+      background: #ded0bd;
+      box-shadow: inset 0 1px 3px rgba(92, 68, 45, 0.10);
     }
 
     html[data-theme="light"] .switch-btn::after {
-      width: 28px;
-      height: 28px;
-      background: #ffffff;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.16);
+      width: 20px;
+      height: 20px;
+      background: #fffaf1;
+      box-shadow: 0 4px 10px rgba(92, 68, 45, 0.18);
     }
 
     html[data-theme="light"] .switch-btn.on {
-      background: #34c759;
+      background: #c96442;
     }
 
     html[data-theme="light"] .switch-btn.on::after {
-      transform: translateX(24px);
-      background: #ffffff;
+      transform: translateX(20px);
+      background: #fffaf1;
     }
 
     html[data-theme="light"] .fetch-models-status,
     html[data-theme="light"] .session-empty {
-      color: #85858f;
-      font-size: 14px;
-      padding-left: 4px;
+      color: #8a7c6d;
+      font-size: 13px;
+      padding: 8px 2px 12px;
     }
 
     @media (max-width: 520px) {
@@ -2606,17 +2683,17 @@
       }
 
       html[data-theme="light"] .drawer {
-        padding-left: 18px;
-        padding-right: 18px;
+        padding-left: 12px;
+        padding-right: 12px;
       }
 
       html[data-theme="light"] .section {
-        border-radius: 28px;
-        padding: 18px 16px;
+        border-radius: 16px;
+        padding: 13px;
       }
 
       html[data-theme="light"] .field label {
-        margin-left: 40px;
+        margin-left: 0;
       }
     }
   </style>
@@ -3143,6 +3220,136 @@
     background: rgba(125, 145, 170, 0.16) !important;
     border-color: rgba(170, 190, 220, 0.18) !important;
     color: #dbe7f5 !important;
+  }
+
+  html:not([data-theme="light"]) .hljs-attr,
+  html:not([data-theme="light"]) .hljs-property,
+  html:not([data-theme="light"]) .hljs-operator,
+  html:not([data-theme="light"]) .hljs-punctuation {
+    color: #fbbf24 !important;
+  }
+
+  html:not([data-theme="light"]) .hljs-class,
+  html:not([data-theme="light"]) .hljs-title.class_,
+  html:not([data-theme="light"]) .hljs-title.function_ {
+    color: #67e8f9 !important;
+  }
+
+  html:not([data-theme="light"]) .hljs-doctag,
+  html:not([data-theme="light"]) .hljs-formula {
+    color: #c4b5fd !important;
+  }
+
+  html:not([data-theme="light"]) .code-line::before {
+    color: #72839a;
+    background: rgba(7, 11, 17, 0.92);
+    border-right-color: rgba(148, 163, 184, 0.16);
+  }
+
+  html:not([data-theme="light"]) .code-line.active-line {
+    background: rgba(251, 191, 36, 0.12);
+  }
+
+  html:not([data-theme="light"]) .code-line.active-line::before {
+    color: #facc15;
+    background: rgba(120, 75, 12, 0.30);
+  }
+
+  html:not([data-theme="light"]) .code-tool-btn.active {
+    background: rgba(245, 158, 11, 0.20) !important;
+    border-color: rgba(251, 191, 36, 0.34) !important;
+    color: #fde68a !important;
+  }
+
+  html[data-theme="light"] .assistant .bubble pre {
+    background: #2b2116 !important;
+    border-color: rgba(190, 110, 24, 0.42) !important;
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 214, 142, 0.07),
+      0 10px 26px rgba(105, 74, 44, 0.18) !important;
+  }
+
+  html[data-theme="light"] .assistant .bubble pre code,
+  html[data-theme="light"] .assistant .bubble pre code.hljs {
+    color: #ffe2b3 !important;
+  }
+
+  html[data-theme="light"] .hljs-keyword,
+  html[data-theme="light"] .hljs-selector-tag,
+  html[data-theme="light"] .hljs-built_in,
+  html[data-theme="light"] .hljs-name,
+  html[data-theme="light"] .hljs-tag {
+    color: #ffb14a !important;
+  }
+
+  html[data-theme="light"] .hljs-string,
+  html[data-theme="light"] .hljs-title,
+  html[data-theme="light"] .hljs-section,
+  html[data-theme="light"] .hljs-attribute,
+  html[data-theme="light"] .hljs-literal,
+  html[data-theme="light"] .hljs-template-tag,
+  html[data-theme="light"] .hljs-template-variable,
+  html[data-theme="light"] .hljs-type,
+  html[data-theme="light"] .hljs-addition {
+    color: #ffd37f !important;
+  }
+
+  html[data-theme="light"] .hljs-number,
+  html[data-theme="light"] .hljs-symbol,
+  html[data-theme="light"] .hljs-bullet,
+  html[data-theme="light"] .hljs-variable,
+  html[data-theme="light"] .hljs-regexp,
+  html[data-theme="light"] .hljs-link {
+    color: #f59e0b !important;
+  }
+
+  html[data-theme="light"] .hljs-comment,
+  html[data-theme="light"] .hljs-quote,
+  html[data-theme="light"] .hljs-deletion,
+  html[data-theme="light"] .hljs-meta {
+    color: #b99566 !important;
+  }
+
+  html[data-theme="light"] .hljs-function .hljs-title,
+  html[data-theme="light"] .hljs-title.function_,
+  html[data-theme="light"] .hljs-title.class_ {
+    color: #ffca64 !important;
+  }
+
+  html[data-theme="light"] .hljs-params {
+    color: #ffe2b3 !important;
+  }
+
+  html[data-theme="light"] .code-line::before {
+    color: #c78b43;
+    background: rgba(43, 33, 22, 0.94);
+    border-right-color: rgba(255, 194, 104, 0.18);
+  }
+
+  html[data-theme="light"] .code-line.active-line {
+    background: rgba(190, 110, 24, 0.18);
+  }
+
+  html[data-theme="light"] .code-line.active-line::before {
+    color: #ffd37f;
+    background: rgba(111, 65, 13, 0.48);
+  }
+
+  html[data-theme="light"] .code-lang-label,
+  html[data-theme="light"] .code-line-count {
+    color: #d49a52 !important;
+  }
+
+  html[data-theme="light"] .code-tool-btn {
+    background: rgba(190, 110, 24, 0.18) !important;
+    border-color: rgba(255, 194, 104, 0.28) !important;
+    color: #ffdca0 !important;
+  }
+
+  html[data-theme="light"] .code-tool-btn.active {
+    background: rgba(217, 131, 23, 0.30) !important;
+    border-color: rgba(255, 194, 104, 0.46) !important;
+    color: #fff0cf !important;
   }
 </style>
 
@@ -3973,7 +4180,9 @@
         <div class="drawer-title">Claude Web</div>
         <div class="drawer-sub">对话、模型、接入商</div>
       </div>
-      <button id="closeDrawer" class="close-btn">×</button>
+      <div class="drawer-head-actions">
+        <button id="closeDrawer" class="close-btn">×</button>
+      </div>
     </div>
 
     <div class="section">
@@ -4056,6 +4265,7 @@
       <div id="systemPromptList" class="system-prompt-list"></div>
       <button id="newSystemPromptBtn" class="drawer-btn">新增系统提示词</button>
     </div>
+
   </aside>
 
   <main class="wrap">
@@ -4138,6 +4348,7 @@
     const conversationSearchResults = $("conversationSearchResults");
     const themeToggle = $("themeToggle");
     const themeColorMeta = $("themeColorMeta");
+    const shareBtn = $("shareBtn");
 
     const drawer = $("drawer");
     const overlay = $("drawerOverlay");
@@ -4216,7 +4427,7 @@
       currentTheme = theme === "light" ? "light" : "dark";
       document.documentElement.dataset.theme = currentTheme;
       if (themeColorMeta) {
-        themeColorMeta.setAttribute("content", currentTheme === "light" ? "#f7f5ef" : "#1c1c1a");
+        themeColorMeta.setAttribute("content", currentTheme === "light" ? "#faf6ef" : "#1c1c1a");
       }
       if (themeToggle) {
         const isLight = currentTheme === "light";
@@ -4563,8 +4774,8 @@
       localStorage.setItem("model_choices_collapsed", collapsed ? "1" : "0");
     }
 
-    function restoreModel() {
-      const m = localStorage.getItem(currentModelKey()) || localStorage.getItem("last_model_global") || apiModel.value || "claude-opus-4-7";
+    function restoreModel(fallbackModel = "") {
+      const m = localStorage.getItem(currentModelKey()) || fallbackModel || localStorage.getItem("last_model_global") || apiModel.value || "claude-opus-4-7";
       setModel(m);
     }
 
@@ -4859,10 +5070,28 @@
       return candidates.length ? Math.min(...candidates) : -1;
     }
 
+    function findLastUnclosedInlineMarkdown(text) {
+      const src = String(text || "");
+      const fenceStart = findLastUnclosedFence(src);
+      const scanEnd = fenceStart === -1 ? src.length : fenceStart;
+      const codeRanges = getClosedFenceRanges(src, scanEnd);
+      let inlineCode = -1;
+
+      for (let i = 0; i < scanEnd; i += 1) {
+        if (isInsideRanges(i, codeRanges)) continue;
+        if (src[i] !== "`" || src.startsWith("```", i)) continue;
+        inlineCode = inlineCode === -1 ? i : -1;
+      }
+
+      return inlineCode;
+    }
+
     function splitStableStreamingMarkdown(text) {
       const src = String(text || "");
-      const splitAt = findLastUnclosedMathDelimiter(src);
-      if (splitAt === -1) {
+      const splitAt = [findLastUnclosedMathDelimiter(src), findLastUnclosedInlineMarkdown(src)]
+        .filter(pos => pos >= 0)
+        .sort((a, b) => a - b)[0];
+      if (splitAt === undefined) {
         return { stable: src, pending: "" };
       }
       return {
@@ -6275,13 +6504,20 @@
     let lastStreamingRenderTime = 0;
     const STREAMING_RENDER_THROTTLE = 16; // 接近 60fps，优先更快把新内容画出来
     let streamingDisplayContent = "";
+    let streamingDisplayContentPending = "";
+    let streamingDisplayAnimateFromPending = 0;
+    let streamingDisplayRaf = 0;
     let streamingTargetContent = "";
     let streamingTypewriterTimer = null;
+    let streamingTextController = null;
     let streamingScheduleSeq = 0;
     let isAssistantTyping = false;
     let thinkingMotionTimer = null;
     let streamingBubbleRenderSeq = 0;
     let streamingLastCommittedHtml = "";
+    let streamingMathLastTypesetAt = 0;
+    let streamingMathLastTypesetLength = 0;
+    let streamingMathTypesetQueued = false;
     function getLastAssistantBubble() {
       const assistantWraps = chatList.querySelectorAll(".msg-wrap.assistant");
       if (!assistantWraps.length) return null;
@@ -6301,14 +6537,135 @@
       return `<div class="streaming-plain-text">${escapeHtml(text || "")}</div>`;
     }
 
-    function buildAssistantBubbleHtml(text, sources, finalRender, showCaret) {
-      const contentHtml = finalRender
+    const FLOWTOKEN_RECENT_CHARS = 220;
+    const FLOWTOKEN_MAX_DELAY = 160;
+    const FLOWTOKEN_TOKEN_DELAY = 22;
+    const STREAM_STABLE_MIN_ACTIVE_CHARS = 44;
+
+    function findStableStreamingCut(text) {
+      const src = String(text || "");
+      if (src.length < STREAM_STABLE_MIN_ACTIVE_CHARS * 2) return 0;
+
+      const firstUnclosed = findLastUnclosedMathDelimiter(src);
+      const safeLimit = firstUnclosed === -1 ? src.length : firstUnclosed;
+      const safeText = src.slice(0, Math.max(0, safeLimit));
+      const codeRanges = getClosedFenceRanges(safeText, safeText.length);
+      const boundaryPatterns = [
+        /\n\n+(?=\S)/g,
+        /\n(?=#{1,6}\s)/g,
+        /\n(?=(?:[-*+]|\d+\.)\s)/g,
+        /\n(?=>\s)/g,
+        /[.!?。！？]["')\]]?\s+(?=\S)/g
+      ];
+      let cut = 0;
+
+      boundaryPatterns.forEach(pattern => {
+        let match;
+        while ((match = pattern.exec(safeText))) {
+          if (isInsideRanges(match.index, codeRanges)) continue;
+          const candidate = match.index + match[0].length;
+          if (candidate >= STREAM_STABLE_MIN_ACTIVE_CHARS && src.length - candidate >= STREAM_STABLE_MIN_ACTIVE_CHARS) {
+            cut = Math.max(cut, candidate);
+          }
+        }
+      });
+
+      return cut;
+    }
+
+    function renderStreamingMarkdownSegmented(text, animateFrom = 0) {
+      const src = String(text || "");
+      const stableCut = findStableStreamingCut(src);
+      const stable = stableCut > 0 ? src.slice(0, stableCut) : "";
+      const active = stableCut > 0 ? src.slice(stableCut) : src;
+      let html = stable ? `<div class="stream-stable">${renderMarkdown(stable)}</div>` : "";
+      let activeHtml = renderStreamingMarkdown(active);
+
+      if (activeHtml) {
+        const activeAnimateFrom = Math.max(0, animateFrom - stable.length);
+        activeHtml = applyFlowTokenTypewriter(activeHtml, active, activeAnimateFrom);
+        html += `<div class="stream-active">${activeHtml}</div>`;
+      }
+
+      return html;
+    }
+
+    function shouldSkipFlowTokenNode(node) {
+      const parent = node && node.parentElement;
+      if (!parent) return true;
+      return !!parent.closest("script, noscript, style, textarea, pre, code, kbd, samp, mjx-container, .math-source, .math-source-pending, .math-display-fallback, .math-inline-fallback, .streaming-math-pending, .stream-caret, .tool-status, .sources-strip, .source-citation");
+    }
+
+    function appendFlowTokenText(fragment, text, tokenState) {
+      const parts = String(text || "").match(/\s+|[^\s]+/g) || [];
+      parts.forEach(part => {
+        if (/^\s+$/.test(part)) {
+          fragment.appendChild(document.createTextNode(part));
+          return;
+        }
+
+        const span = document.createElement("span");
+        span.className = "chatgpt-like-token";
+        span.style.setProperty(
+          "--chatgpt-like-token-delay",
+          Math.min(FLOWTOKEN_MAX_DELAY, tokenState.index * FLOWTOKEN_TOKEN_DELAY) + "ms"
+        );
+        span.textContent = part;
+        tokenState.index += 1;
+        fragment.appendChild(span);
+      });
+    }
+
+    function applyFlowTokenTypewriter(html, sourceText, animateFrom = null) {
+      if (!html || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return html;
+
+      const sourceLength = String(sourceText || "").length;
+      const animatedFrom = animateFrom === null
+        ? Math.max(0, sourceLength - FLOWTOKEN_RECENT_CHARS)
+        : Math.max(0, Math.min(sourceLength, animateFrom));
+      const template = document.createElement("template");
+      template.innerHTML = html;
+      const walker = document.createTreeWalker(template.content, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          if (shouldSkipFlowTokenNode(node)) return NodeFilter.FILTER_REJECT;
+          return (node.nodeValue || "").trim()
+            ? NodeFilter.FILTER_ACCEPT
+            : NodeFilter.FILTER_SKIP;
+        }
+      });
+      const nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+
+      let cursor = 0;
+      const tokenState = { index: 0 };
+      nodes.forEach(node => {
+        const text = node.nodeValue || "";
+        const start = cursor;
+        const end = start + text.length;
+        cursor = end;
+
+        if (end <= animatedFrom) return;
+
+        const localStart = Math.max(0, animatedFrom - start);
+        const fragment = document.createDocumentFragment();
+        if (localStart > 0) {
+          fragment.appendChild(document.createTextNode(text.slice(0, localStart)));
+        }
+        appendFlowTokenText(fragment, text.slice(localStart), tokenState);
+        node.parentNode.replaceChild(fragment, node);
+      });
+
+      return template.innerHTML;
+    }
+
+    function buildAssistantBubbleHtml(text, sources, finalRender, showCaret, animateFrom = null) {
+      let contentHtml = finalRender
         ? renderMarkdown(text)
-        : renderStreamingMarkdown(text);
+        : renderStreamingMarkdownSegmented(text, animateFrom);
       let html = (finalRender ? "" : renderThinkingHtml()) + renderToolStatusesHtml() + contentHtml;
       html += renderSourcesStrip(sources);
       if (showCaret && text.trim() && text.trim() !== "思考中...") {
-        html += '<span class="stream-caret"></span>';
+        html += '<span class="chatgpt-like-cursor">▍</span>';
       }
       return html;
     }
@@ -6325,14 +6682,19 @@
     }
 
     function commitAssistantBubbleHtml(bubble, html, sources, finalRender) {
-      if (!bubble || bubble.innerHTML === html) return;
+      if (!bubble) return;
+      bubble.classList.toggle("chatgpt-like-streaming", !finalRender);
+      if (bubble.innerHTML === html) {
+        prepareAssistantBubbleDom(bubble, sources, finalRender);
+        return;
+      }
       bubble.innerHTML = html;
       streamingLastCommittedHtml = html;
       prepareAssistantBubbleDom(bubble, sources, finalRender);
     }
 
-    function renderAssistantBubbleBuffered(bubble, text, sources, finalRender, showCaret) {
-      const html = buildAssistantBubbleHtml(text, sources, finalRender, showCaret);
+    function renderAssistantBubbleBuffered(bubble, text, sources, finalRender, showCaret, animateFrom = null) {
+      const html = buildAssistantBubbleHtml(text, sources, finalRender, showCaret, animateFrom);
       const renderSeq = ++streamingBubbleRenderSeq;
       const staging = document.createElement("div");
       staging.className = bubble.className;
@@ -6365,7 +6727,25 @@
       });
     }
 
-    function renderAssistantContentIntoBubble(bubble, content, finalRender = false, showCaret = false) {
+    function queueStreamingMathTypesetLight(root, textLength) {
+      if (!root || !root.isConnected || streamingMathTypesetQueued) return;
+      if (!hasRenderableMath(root)) return;
+      const now = Date.now();
+      const enoughTime = now - streamingMathLastTypesetAt > 520;
+      const enoughText = Math.abs(textLength - streamingMathLastTypesetLength) > 72;
+      if (!enoughTime && !enoughText) return;
+      streamingMathTypesetQueued = true;
+      const run = () => {
+        streamingMathTypesetQueued = false;
+        if (!root.isConnected || !root.classList.contains("chatgpt-like-streaming")) return;
+        streamingMathLastTypesetAt = Date.now();
+        streamingMathLastTypesetLength = textLength;
+        queueMathTypeset(root, { latestOnly: true, preserveScroll: true, timeout: 520, delay: 40 });
+      };
+      setTimeout(run, 40);
+    }
+
+    function renderAssistantContentIntoBubble(bubble, content, finalRender = false, showCaret = false, animateFrom = null) {
       if (!bubble) return false;
 
       const text = stripStreamingStatusMarkers(content || "");
@@ -6386,14 +6766,18 @@
       const heightBefore = getPageHeight();
       const wasNearBottom = isNearBottom(AUTO_SCROLL_THRESHOLD);
 
-      const html = buildAssistantBubbleHtml(text, sources, finalRender, showCaret);
-      const needsBufferedMath = hasRenderableMathInHtml(html);
+      const html = buildAssistantBubbleHtml(text, sources, finalRender, showCaret, animateFrom);
+      const needsBufferedMath = finalRender && hasRenderableMathInHtml(html);
       let committedNow = false;
 
       if (needsBufferedMath) {
-        renderAssistantBubbleBuffered(bubble, text, sources, finalRender, showCaret);
+        renderAssistantBubbleBuffered(bubble, text, sources, finalRender, showCaret, animateFrom);
       } else {
         commitAssistantBubbleHtml(bubble, html, sources, finalRender);
+        if (!finalRender) {
+          revealPendingMathSources(bubble);
+          queueStreamingMathTypesetLight(bubble, text.length);
+        }
         committedNow = true;
       }
 
@@ -6452,7 +6836,51 @@
       });
     }
 
-    function updateLastAssistantBubble(content, finalRender = false, showCaret = false) {
+    function finalizeLastAssistantBubbleInPlace() {
+      const bubble = getLastAssistantBubble();
+      if (!bubble) return false;
+
+      const heightBefore = bubble.offsetHeight;
+      if (heightBefore > 0) {
+        bubble.style.minHeight = heightBefore + "px";
+      }
+
+      bubble.querySelectorAll(".chatgpt-like-cursor, .stream-caret").forEach(el => el.remove());
+      bubble.classList.remove("chatgpt-like-streaming");
+      bubble.classList.add("chatgpt-like-finalizing");
+      bubble.querySelectorAll(".chatgpt-like-token, .flowtoken-token").forEach(el => {
+        el.style.animation = "none";
+        el.style.filter = "none";
+        el.style.textShadow = "none";
+        el.style.transform = "none";
+      });
+
+      const finish = () => {
+        if (!bubble.isConnected) return;
+        enhanceRichText(bubble);
+        enhanceCodeBlocks(bubble);
+        applyMessageCollapse(bubble.closest(".msg-wrap"), true);
+        if (hasRenderableMath(bubble)) {
+          queueMathTypeset(bubble, { latestOnly: true, preserveScroll: true, timeout: 1200 });
+        }
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            if (!bubble.isConnected) return;
+            bubble.classList.remove("chatgpt-like-finalizing");
+            bubble.style.minHeight = "";
+          });
+        });
+      };
+
+      if (window.requestIdleCallback) {
+        requestIdleCallback(finish, { timeout: 260 });
+      } else {
+        setTimeout(finish, 80);
+      }
+      return true;
+    }
+
+    function updateLastAssistantBubble(content, finalRender = false, showCaret = false, animateFrom = null) {
       const bubble = getLastAssistantBubble();
 
       // 如果找不到最后一个 assistant bubble，说明 DOM 状态不完整，退回全量渲染。
@@ -6463,7 +6891,7 @@
         return false;
       }
 
-      renderAssistantContentIntoBubble(bubble, content, finalRender, showCaret);
+      renderAssistantContentIntoBubble(bubble, content, finalRender, showCaret, animateFrom);
       bindThinkingPanels(bubble);
       followBottomDuringStreaming();
       return true;
@@ -6478,7 +6906,14 @@
       isAssistantTyping = false;
       stopThinkingMotion();
 
-      if (finalRender) {
+      if (streamingTextController) {
+        if (finalRender) {
+          streamingTextController.flush();
+          streamingDisplayContent = streamingTargetContent || streamingDisplayContent;
+        } else {
+          streamingTextController.stop();
+        }
+      } else if (finalRender) {
         streamingDisplayContent = streamingTargetContent || streamingDisplayContent;
       }
     }
@@ -6508,11 +6943,12 @@
     }
 
     function getTypewriterBurstSize(remaining) {
-      if (remaining > 900) return 28;
-      if (remaining > 480) return 18;
-      if (remaining > 220) return 12;
-      if (remaining > 80) return 7;
-      return 3;
+      if (remaining > 1800) return 28;
+      if (remaining > 900) return 20;
+      if (remaining > 480) return 14;
+      if (remaining > 220) return 9;
+      if (remaining > 80) return 5;
+      return 2;
     }
 
     function getNextTypewriterSlice() {
@@ -6563,13 +6999,13 @@
       const chunk = source.slice(start, end);
       const last = chunk[chunk.length - 1] || "";
 
-      let delay = 2;
-      if (isLineBreak(last)) delay = 12;
-      else if (isWhitespace(last)) delay = 1;
-      else if (isCjkChar(last)) delay = 3;
-      else if (isAsciiWordChar(last)) delay = 4;
-      else if (isSoftPunctuation(last)) delay = 6;
-      else if (isHardPunctuation(last)) delay = 10;
+      let delay = 12;
+      if (isLineBreak(last)) delay = 20;
+      else if (isWhitespace(last)) delay = 8;
+      else if (isCjkChar(last)) delay = 12;
+      else if (isAsciiWordChar(last)) delay = 12;
+      else if (isSoftPunctuation(last)) delay = 16;
+      else if (isHardPunctuation(last)) delay = 22;
 
       return {
         nextText: source.slice(0, end),
@@ -6584,14 +7020,15 @@
 
       const remaining = streamingTargetContent.length - streamingDisplayContent.length;
       if (remaining <= 0) {
-        updateLastAssistantBubble(streamingDisplayContent, false, true);
+        updateLastAssistantBubble(streamingDisplayContent, false, true, streamingDisplayContent.length);
         return;
       }
 
+      const previousLength = streamingDisplayContent.length;
       const next = getNextTypewriterSlice();
       streamingDisplayContent = next.nextText;
 
-      updateLastAssistantBubble(streamingDisplayContent, false, true);
+      updateLastAssistantBubble(streamingDisplayContent, false, true, previousLength);
 
       if (streamingDisplayContent.length < streamingTargetContent.length) {
         streamingTypewriterTimer = setTimeout(tickStreamingTypewriter, next.delay);
@@ -6603,15 +7040,51 @@
         isAssistantTyping = true;
       }
 
+      if (streamingTextController) return;
+      if (window.ChatGPTLikeOutput && typeof window.ChatGPTLikeOutput.createStreamingText === "function") {
+        streamingTextController = window.ChatGPTLikeOutput.createStreamingText({
+          enabled: true,
+          minDelay: 8,
+          maxDelay: 34,
+          resetKey: streamingScheduleSeq,
+          onUpdate(displayContent, state) {
+            streamingDisplayContentPending = displayContent;
+            streamingDisplayAnimateFromPending = streamingDisplayContent.length;
+            if (streamingDisplayRaf) return;
+            streamingDisplayRaf = requestAnimationFrame(() => {
+              streamingDisplayRaf = 0;
+              const nextDisplayContent = streamingDisplayContentPending;
+              const previousLength = streamingDisplayAnimateFromPending;
+              streamingDisplayContent = nextDisplayContent;
+              updateLastAssistantBubble(nextDisplayContent, false, isAssistantTyping, previousLength);
+              if (state.done && isAssistantTyping && streamingTargetContent.length === nextDisplayContent.length) {
+                followBottomDuringStreaming();
+              }
+            });
+          }
+        });
+        return;
+      }
+
       if (streamingTypewriterTimer) return;
       streamingTypewriterTimer = setTimeout(tickStreamingTypewriter, 0);
     }
 
     function beginStreamingAssistantMessage() {
       stopStreamingTypewriter(false);
+      if (streamingTextController) {
+        streamingTextController.dispose();
+        streamingTextController = null;
+      }
+      if (streamingDisplayRaf) {
+        cancelAnimationFrame(streamingDisplayRaf);
+        streamingDisplayRaf = 0;
+      }
       streamingScheduleSeq += 1;
       pendingStreamingContent = "";
       streamingDisplayContent = "";
+      streamingDisplayContentPending = "";
+      streamingDisplayAnimateFromPending = 0;
       streamingTargetContent = "";
       activeToolStatuses = [];
       activeStreamingSources = [];
@@ -6626,6 +7099,12 @@
         messages[messages.length - 1].content = text;
       }
       ensureStreamingTypewriter();
+      if (streamingTextController) {
+        streamingTextController.setContent(streamingTargetContent, {
+          enabled: true,
+          resetKey: streamingScheduleSeq
+        });
+      }
     }
 
     function setThinkingContextFromInput(text, files, options = {}) {
@@ -6675,14 +7154,28 @@
     function flushStreamingAssistantUpdate(finalRender = true) {
       streamingScheduleSeq += 1;
       streamingRenderQueued = false;
-      const text = pendingStreamingContent || (messages.length ? (messages[messages.length - 1].content || "") : "");
+      const text = pendingStreamingContent || streamingTargetContent || (messages.length ? (messages[messages.length - 1].content || "") : "");
       pendingStreamingContent = "";
       streamingTargetContent = text;
+      streamingDisplayContent = text;
+      streamingDisplayContentPending = text;
+      streamingDisplayAnimateFromPending = text.length;
+      if (streamingDisplayRaf) {
+        cancelAnimationFrame(streamingDisplayRaf);
+        streamingDisplayRaf = 0;
+      }
       if (messages.length && messages[messages.length - 1].role === "assistant") {
         messages[messages.length - 1].content = text;
       }
-      stopStreamingTypewriter(finalRender);
-      updateLastAssistantBubble(streamingTargetContent, finalRender, false);
+      if (streamingTextController) {
+        streamingTextController.dispose();
+        streamingTextController = null;
+      }
+      stopStreamingTypewriter(false);
+      updateLastAssistantBubble(streamingTargetContent, false, false, text.length);
+      requestAnimationFrame(() => {
+        finalizeLastAssistantBubbleInPlace();
+      });
     }
 
     function showLoadError(message) {
@@ -6966,9 +7459,10 @@
       profileName.value = p.name || "";
       apiUrl.value = p.base_url || "";
       apiKey.value = p.auth_token || "";
-      apiModel.value = p.model || "claude-opus-4-7";
-      apiProtocol.value = normalizeApiProtocol(p.protocol, inferredProtocolForModel(p.model));
+      const fallbackModel = p.model || "claude-opus-4-7";
+      apiProtocol.value = normalizeApiProtocol(p.protocol, inferredProtocolForModel(fallbackModel));
       localStorage.setItem("active_profile", activeProfileId);
+      restoreModel(fallbackModel);
       loadProviderModels();
     }
 
@@ -7814,7 +8308,7 @@
 
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/static/sw.js").catch(() => {});
+        navigator.serviceWorker.register("/static/sw.js?v=19").catch(() => {});
       });
     }
   </script>

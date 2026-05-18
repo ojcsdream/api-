@@ -68,6 +68,26 @@ from services import (
     stream_direct_vision_and_save,
 )
 
+
+def load_local_env_file(path: Path):
+    if not path.exists():
+        return
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        if not key or key in os.environ:
+            continue
+        cleaned = value.strip()
+        if len(cleaned) >= 2 and cleaned[0] == cleaned[-1] and cleaned[0] in {"'", '"'}:
+            cleaned = cleaned[1:-1]
+        os.environ[key] = cleaned
+
+
+load_local_env_file(BASE_DIR / ".env")
+
 init_db()
 
 app = FastAPI(title="Claude Web")
@@ -602,7 +622,7 @@ def chat_stream(body: ChatBody):
             yield "\n[[STATUS:parsing]]\n"
         if search_intent:
             yield "\n[[STATUS:planning_search]]\n"
-            if any("github.com" in url.lower() for url in extract_urls_from_text(body.prompt)):
+            if protocol != "responses" and any("github.com" in url.lower() for url in extract_urls_from_text(body.prompt)):
                 yield "\n[[STATUS:github_mcp]]\n"
             else:
                 yield "\n[[STATUS:searching]]\n"
@@ -1052,35 +1072,40 @@ async def chat_upload_stream(
 
         fname = file.filename or "uploaded_file"
 
-        if is_image_file(fname):
-            if Path(fname).suffix.lower() not in VISION_IMAGE_EXTS:
-                raise HTTPException(
-                    status_code=400,
-                    detail="公网模式下暂只支持 jpg/jpeg/png/webp 图片，请先转换后再上传。",
-                )
-            original, local_path, web_path = await save_uploaded_file_dual_paths(file)
+        try:
+            if is_image_file(fname):
+                if Path(fname).suffix.lower() not in VISION_IMAGE_EXTS:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="公网模式下暂只支持 jpg/jpeg/png/webp 图片，请先转换后再上传。",
+                    )
+                original, local_path, web_path = await save_uploaded_file_dual_paths(file)
 
-            image_files.append({
-                "name": original,
-                "local_path": local_path,
-                "web_path": web_path,
-            })
+                image_files.append({
+                    "name": original,
+                    "local_path": local_path,
+                    "web_path": web_path,
+                })
 
-            all_names.append(original)
-            web_image_paths.append(web_path)
-            local_image_paths.append(local_path)
-        else:
-            original, local_path, web_path = await save_uploaded_file_dual_paths(file)
-            text = load_uploaded_text_from_path(local_path)
-            if not text:
-                text = "(文件为空，或不是可直接按 UTF-8 读取的文本文件)"
-            text_files.append({
-                "name": original,
-                "text": text,
-                "local_path": local_path,
-                "web_path": web_path,
-            })
-            all_names.append(original)
+                all_names.append(original)
+                web_image_paths.append(web_path)
+                local_image_paths.append(local_path)
+            else:
+                original, local_path, web_path = await save_uploaded_file_dual_paths(file)
+                text = load_uploaded_text_from_path(local_path)
+                if not text:
+                    text = "(文件为空，或不是可直接按 UTF-8 读取的文本文件)"
+                text_files.append({
+                    "name": original,
+                    "text": text,
+                    "local_path": local_path,
+                    "web_path": web_path,
+                })
+                all_names.append(original)
+        except HTTPException:
+            raise
+        except RuntimeError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
 
     user_prompt = prompt.strip() or "请分析我上传的文件/图片。"
 
