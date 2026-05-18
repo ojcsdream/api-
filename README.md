@@ -15,7 +15,7 @@
 - 系统提示词管理
 - 会话创建、重命名、固定、删除、搜索、Markdown 导出
 - 自主联网搜索，支持 Tavily 和 SerpAPI
-- GitHub 链接在 Responses 协议下直接随 `input` 传给上游解析
+- GitHub 链接在 Responses 协议下优先走后端 GitHub MCP 源码读取器，再把源码上下文传给模型
 - SQLite 本地持久化
 - 健康检查、管理后台、部署脚本、启动脚本
 
