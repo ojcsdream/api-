@@ -563,24 +563,29 @@
     }
 
     .msg-wrap.sent-message-enter {
-      animation: messageSendUp 0.86s cubic-bezier(.16, 1, .3, 1) both;
+      animation: messageSendUp 1.04s cubic-bezier(.16, 1, .3, 1) both;
       transform-origin: right bottom;
       will-change: opacity, transform, filter;
     }
 
     .msg-wrap.sent-message-enter .bubble {
-      animation: messageBubbleSettle 0.96s cubic-bezier(.16, 1, .3, 1) both;
+      animation: messageBubbleSettle 1.08s cubic-bezier(.16, 1, .3, 1) both;
     }
 
     @keyframes messageSendUp {
       0% {
         opacity: 0;
-        transform: translate3d(0, 54px, 0) scale(0.982);
-        filter: blur(8px);
+        transform: translate3d(0, 74px, 0) scale(0.976);
+        filter: blur(10px);
       }
-      58% {
+      34% {
+        opacity: 0.82;
+        transform: translate3d(0, 14px, 0) scale(0.992);
+        filter: blur(3px);
+      }
+      68% {
         opacity: 1;
-        transform: translate3d(0, -4px, 0) scale(1.002);
+        transform: translate3d(0, -10px, 0) scale(1.004);
         filter: blur(0);
       }
       100% {
@@ -593,9 +598,14 @@
     @keyframes messageBubbleSettle {
       0% {
         box-shadow: 0 18px 36px rgba(0,0,0,0.18), var(--glass-highlight);
+        transform: translate3d(0, 10px, 0);
+      }
+      62% {
+        transform: translate3d(0, -3px, 0);
       }
       100% {
         box-shadow: var(--glass-shadow-md), var(--glass-highlight);
+        transform: translate3d(0, 0, 0);
       }
     }
 
@@ -1130,11 +1140,12 @@
       min-height: 32px;
       opacity: 0.38;
       padding: 2px 0;
-      transition: opacity .16s ease;
+      transition: opacity .16s ease, transform .16s ease;
     }
 
     .msg-wrap:hover .msg-actions {
       opacity: 0.92;
+      transform: translateY(-1px);
     }
 
     .msg-wrap.user .msg-actions {
@@ -1166,6 +1177,25 @@
       background: rgba(255,255,255,0.06);
       border-color: rgba(255,255,255,0.10);
       color: #e8dece;
+    }
+
+    .small-btn:focus-visible,
+    .message-fold-btn:focus-visible,
+    .version-toggle-btn:focus-visible {
+      outline: 2px solid rgba(226, 111, 85, 0.58);
+      outline-offset: 2px;
+    }
+
+    .small-btn.resend-msg {
+      color: #d9c5ad;
+      background: rgba(226,111,85,0.055);
+      border-color: rgba(226,111,85,0.16);
+    }
+
+    .small-btn.resend-msg:hover {
+      color: #ffe2cc;
+      background: rgba(226,111,85,0.12);
+      border-color: rgba(226,111,85,0.34);
     }
 
     .small-btn:active {
@@ -1730,11 +1760,11 @@
     }
 
     .send-btn.send-launch::after {
-      animation: sendLaunchRipple 0.78s cubic-bezier(.16, 1, .3, 1);
+      animation: sendLaunchRipple 0.9s cubic-bezier(.16, 1, .3, 1);
     }
 
     .send-btn.send-launch .send-arrow {
-      animation: sendArrowLift 0.78s cubic-bezier(.16, 1, .3, 1);
+      animation: sendArrowLift 0.9s cubic-bezier(.16, 1, .3, 1);
     }
 
     .stop-icon {
@@ -1768,9 +1798,17 @@
         opacity: 1;
         transform: translateY(-0.5px) scale(1);
       }
-      45% {
+      24% {
+        opacity: 1;
+        transform: translateY(-7px) scale(1.04);
+      }
+      54% {
         opacity: 0;
-        transform: translateY(-13px) scale(0.9);
+        transform: translateY(-21px) scale(0.86);
+      }
+      55% {
+        opacity: 0;
+        transform: translateY(13px) scale(0.9);
       }
       100% {
         opacity: 1;

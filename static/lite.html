@@ -82,6 +82,11 @@
       flex-shrink: 0;
       opacity: 0.6;
       padding-top: 2px;
+      transition: opacity .16s ease, transform .16s ease;
+    }
+    .msg:hover .msg-actions {
+      opacity: 0.96;
+      transform: translateY(-1px);
     }
     .small-btn {
       min-width: 28px;
@@ -98,6 +103,21 @@
     .small-btn:active {
       transform: scale(0.94);
       background: rgba(255,255,255,0.14);
+    }
+    .small-btn:focus-visible,
+    .version-toggle-btn:focus-visible {
+      outline: 2px solid rgba(226,111,85,0.58);
+      outline-offset: 2px;
+    }
+    .small-btn.resend-msg {
+      color: #d9c5ad;
+      background: rgba(226,111,85,0.06);
+      border-color: rgba(226,111,85,0.18);
+    }
+    .small-btn.resend-msg:hover {
+      color: #ffe2cc;
+      background: rgba(226,111,85,0.13);
+      border-color: rgba(226,111,85,0.34);
     }
     .small-btn.copied {
       color: #a0c8a0;
@@ -645,7 +665,7 @@
         conversationId = data.id;
         messages = [];
         localStorage.setItem("lite_conversation", conversationId);
-        renderMessages();
+        await loadMessages();
         status("新对话已创建");
       } catch (e) {
         status("新建对话失败：" + e.message);
