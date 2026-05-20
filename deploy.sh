@@ -13,7 +13,7 @@ PUBLIC_URL="${PUBLIC_URL:-}"
 echo "== Claude Web deploy =="
 echo "project: $(pwd)"
 
-chmod +x install.sh start-local.sh start-public.sh start-ngrok.sh start-cloudflare.sh start-monitors.sh scripts/smoke_test.py 2>/dev/null || true
+chmod +x install.sh deploy.sh update.sh start-local.sh start-public.sh start-ngrok.sh start-cloudflare.sh start-monitors.sh scripts/smoke_test.py 2>/dev/null || true
 
 echo "== install dependencies =="
 BOOTSTRAP_INSTALL_NGROK="${BOOTSTRAP_INSTALL_NGROK:-0}"
