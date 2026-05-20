@@ -38,7 +38,10 @@
       font-weight: 700;
       border: 0;
     }
-    button:disabled { opacity: .55; }
+    button:disabled {
+      opacity: .55;
+      cursor: wait;
+    }
     .wrap {
       max-width: 860px;
       margin: 0 auto;
@@ -231,6 +234,7 @@
     let messages = [];
     let conversationId = localStorage.getItem("lite_conversation") || "";
     let sending = false;
+    let creatingConversation = false;
     let streamController = null;
 
     function status(text) {
@@ -610,11 +614,26 @@
     }
 
     $("newBtn").onclick = async () => {
-      const data = await api("POST", "/api/conversations", { title: "Lite 对话" });
-      conversationId = data.id;
-      localStorage.setItem("lite_conversation", conversationId);
-      await loadMessages();
-      status("新对话已创建");
+      const newBtn = $("newBtn");
+      if (creatingConversation) return;
+      creatingConversation = true;
+      newBtn.disabled = true;
+      newBtn.textContent = "新建中...";
+
+      try {
+        const data = await api("POST", "/api/conversations", { title: "Lite 对话" });
+        conversationId = data.id;
+        messages = [];
+        localStorage.setItem("lite_conversation", conversationId);
+        renderMessages();
+        status("新对话已创建");
+      } catch (e) {
+        status("新建对话失败：" + e.message);
+      } finally {
+        creatingConversation = false;
+        newBtn.disabled = false;
+        newBtn.textContent = "新对话";
+      }
     };
     sendBtn.onclick = send;
     promptEl.addEventListener("keydown", e => {

@@ -133,9 +133,16 @@ def should_autonomous_search(prompt: str, force: bool = False) -> bool:
     return bool(looks_like_search_request(prompt or ""))
 
 
-def should_autonomous_search_with_context(prompt: str, history=None, force: bool = False) -> bool:
+def should_autonomous_search_with_context(
+    prompt: str,
+    history=None,
+    force: bool = False,
+    allow_contextual_search: bool = True,
+) -> bool:
     if should_autonomous_search(prompt, force=force):
         return True
+    if not allow_contextual_search:
+        return False
     value = (prompt or "").strip().lower()
     if not value or not history:
         return False
@@ -629,8 +636,13 @@ def chat_stream(body: ChatBody):
 
     def gen():
         has_urls = bool(extract_urls_from_text(body.prompt))
-        search_intent = should_autonomous_search_with_context(body.prompt, history, force=body.web_search)
         should_fetch_urls = has_urls and protocol != "responses"
+        search_intent = should_autonomous_search_with_context(
+            body.prompt,
+            history,
+            force=body.web_search,
+            allow_contextual_search=bool(body.web_search or should_fetch_urls),
+        )
         should_prepare_search = search_intent or should_fetch_urls
         yield "\n[[STATUS:thinking]]\n"
         if should_prepare_search:
@@ -735,12 +747,13 @@ def _build_regenerate_prompt_with_search(
     if not protocol:
         protocol = "completions" if (api_model or "").lower().startswith("gpt") or "gpt-" in (api_model or "").lower() else "claude"
 
+    should_fetch_urls = bool(extract_urls_from_text(last_user_prompt)) and protocol != "responses"
     search_intent = should_autonomous_search_with_context(
         last_user_prompt,
         context_messages,
         force=web_search,
+        allow_contextual_search=bool(web_search or should_fetch_urls),
     )
-    should_fetch_urls = bool(extract_urls_from_text(last_user_prompt)) and protocol != "responses"
     if search_intent:
         if protocol == "responses":
             plan = build_responses_search_plan(last_user_prompt, context_messages)
@@ -1152,12 +1165,13 @@ async def chat_upload_stream(
 
     sources = []
     search_observation = ""
+    should_fetch_urls = bool(extract_urls_from_text(user_prompt)) and protocol != "responses"
     search_intent = should_autonomous_search_with_context(
         user_prompt,
         history,
         force=web_search,
+        allow_contextual_search=bool(web_search or should_fetch_urls),
     )
-    should_fetch_urls = bool(extract_urls_from_text(user_prompt)) and protocol != "responses"
     should_search = False
     if search_intent:
         if protocol == "responses":
