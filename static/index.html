@@ -26,32 +26,60 @@
   </script>
 
   <script>
-    window.MathJax = {
-      loader: {
-        load: ["[tex]/mhchem"]
-      },
-      tex: {
-        inlineMath: [["\\(", "\\)"], ["$", "$"]],
-        displayMath: [["$$", "$$"], ["\\[", "\\]"]],
-        processEscapes: true,
-        processEnvironments: true,
-        packages: {"[+]": ["ams", "mhchem", "noerrors", "noundefined"]}
-      },
-      chtml: {
-        scale: 1.02,
-        matchFontHeight: false,
-        mtextInheritFont: true
-      },
-      options: {
-        skipHtmlTags: ["script", "noscript", "style", "textarea", "pre", "code"]
-      },
-      startup: { typeset: false }
-    };
+    (function() {
+      window._mathjaxReady = false;
+      window._mathjaxPromise = null;
+      window._mathjaxConfig = {
+        loader: {
+          load: ["[tex]/mhchem"]
+        },
+        tex: {
+          inlineMath: [["\\(", "\\)"], ["$", "$"]],
+          displayMath: [["$$", "$$"], ["\\[", "\\]"]],
+          processEscapes: true,
+          processEnvironments: true,
+          packages: {"[+]": ["ams", "mhchem", "noerrors", "noundefined"]}
+        },
+        chtml: {
+          scale: 1.02,
+          matchFontHeight: false,
+          mtextInheritFont: true
+        },
+        options: {
+          skipHtmlTags: ["script", "noscript", "style", "textarea", "pre", "code"]
+        },
+        startup: { typeset: false }
+      };
+      window.loadMathJax = function() {
+        if (window._mathjaxPromise) return window._mathjaxPromise;
+        if (window._mathjaxReady) return Promise.resolve();
+        window._mathjaxPromise = new Promise(function(resolve, reject) {
+          if (window.MathJax && window.MathJax.typesetPromise) {
+            window._mathjaxReady = true;
+            resolve();
+            return;
+          }
+          window.MathJax = window._mathjaxConfig;
+          var script = document.createElement("script");
+          script.src = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js";
+          script.onload = function() { window._mathjaxReady = true; resolve(); };
+          script.onerror = function(err) {
+            window._mathjaxReady = false;
+            window._mathjaxPromise = null;
+            if (window.MathJax === window._mathjaxConfig) {
+              window.MathJax = undefined;
+            }
+            reject(err);
+          };
+          document.head.appendChild(script);
+        });
+        return window._mathjaxPromise;
+      };
+    })();
   </script>
 
   <script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/common.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
   <script defer src="/static/js/chatgpt-like-output.js"></script>
 
   <style>
@@ -111,6 +139,52 @@
       --glass-shadow-sm: 0 4px 16px rgba(105, 74, 44, 0.045);
       --glass-shadow-md: 0 14px 36px rgba(105, 74, 44, 0.070);
       --glass-shadow-lg: 0 20px 60px rgba(105, 74, 44, 0.095);
+    }
+
+    @keyframes skeleton-pulse {
+      0% { opacity: 0.3; }
+      50% { opacity: 0.6; }
+      100% { opacity: 0.3; }
+    }
+
+    .skeleton {
+      background: var(--ui-border);
+      border-radius: 8px;
+      animation: skeleton-pulse 1.5s ease-in-out infinite;
+    }
+
+    .skeleton-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px;
+    }
+
+    .skeleton-row {
+      height: 40px;
+    }
+
+    .skeleton-row-short {
+      height: 40px;
+      width: 60%;
+    }
+
+    .skeleton-main {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 24px;
+    }
+
+    .skeleton-card {
+      height: 120px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .skeleton {
+        animation: none;
+        opacity: 0.4;
+      }
     }
 
     html, body {
@@ -4472,7 +4546,21 @@
 
   <main class="wrap">
     <div id="chatList">
-      <div class="empty">加载中...</div>
+      <div id="skeletonLoader" style="display:flex; height:100%;">
+        <div class="skeleton-sidebar" style="width:260px; flex-shrink:0; border-right:1px solid var(--ui-border); overflow:hidden;">
+          <div class="skeleton skeleton-row"></div>
+          <div class="skeleton skeleton-row-short"></div>
+          <div class="skeleton skeleton-row"></div>
+          <div class="skeleton skeleton-row-short"></div>
+          <div class="skeleton skeleton-row"></div>
+          <div class="skeleton skeleton-row-short"></div>
+        </div>
+        <div class="skeleton-main" style="flex:1;">
+          <div class="skeleton skeleton-card"></div>
+          <div class="skeleton skeleton-card"></div>
+          <div class="skeleton skeleton-card"></div>
+        </div>
+      </div>
     </div>
   </main>
 
@@ -4552,6 +4640,11 @@
     const themeColorMeta = $("themeColorMeta");
     const shareBtn = $("shareBtn");
 
+    function removeSkeleton() {
+      const skel = document.getElementById("skeletonLoader");
+      if (skel) skel.remove();
+    }
+
     const drawer = $("drawer");
     const overlay = $("drawerOverlay");
 
@@ -4616,6 +4709,7 @@
     let lastRenderedMsgKey = "";
     let lastRenderedSessionsKey = "";
     let renderSessionsJob = 0;
+    const MESSAGE_TAIL_LIMIT = 120;
     let webSearchEnabled = false;
     let activeStreamController = null;
     let pendingJumpMessageId = "";
@@ -4624,6 +4718,7 @@
     const collapsedMessageKeys = new Set();
     const longMessageKeys = new Set();
     let activeCodePreview = null;
+    const CONVERSATIONS_PAGE_LIMIT = 200;
 
     const THEME_STORAGE_KEY = "claude_web_theme";
     let currentTheme = localStorage.getItem(THEME_STORAGE_KEY) || "dark";
@@ -4781,6 +4876,114 @@
         if (timer) clearTimeout(timer);
         timer = setTimeout(() => fn(...args), delay);
       };
+    }
+
+    function toTimestampValue(value) {
+      if (typeof value === "number" && Number.isFinite(value)) return value;
+      if (!value) return 0;
+      const parsed = Date.parse(value);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function sortConversationsForSidebar(list) {
+      return (Array.isArray(list) ? list.slice() : []).sort((a, b) => {
+        const pinnedDiff = Number(!!(b && b.is_pinned)) - Number(!!(a && a.is_pinned));
+        if (pinnedDiff) return pinnedDiff;
+        const updatedDiff = toTimestampValue(b && (b.updated_at || b.created_at)) - toTimestampValue(a && (a.updated_at || a.created_at));
+        if (updatedDiff) return updatedDiff;
+        return Number((b && b.id) || 0) - Number((a && a.id) || 0);
+      });
+    }
+
+    function setConversationsState(list) {
+      conversations = sortConversationsForSidebar(list);
+      invalidateSessionsRender();
+      return conversations;
+    }
+
+    function isDefaultConversationTitle(title) {
+      const normalized = String(title || "").trim();
+      return !normalized || normalized === "新对话";
+    }
+
+    function deriveConversationTitleFromPrompt(text) {
+      const normalized = String(text || "").replace(/\s+/g, " ").trim();
+      if (!normalized) return "新对话";
+      return normalized.length > 32 ? normalized.slice(0, 32) + "..." : normalized;
+    }
+
+    function upsertConversationLocal(conversationId, patch = {}) {
+      if (!conversationId) return null;
+      const idx = conversations.findIndex(item => item.id === conversationId);
+      const current = idx >= 0 ? conversations[idx] : { id: conversationId, title: "新对话", is_pinned: 0 };
+      const next = { ...current, ...patch, id: conversationId };
+      const nextList = idx >= 0
+        ? conversations.map((item, itemIdx) => itemIdx === idx ? next : item)
+        : [next, ...conversations];
+      setConversationsState(nextList);
+      return next;
+    }
+
+    function refreshSidebarFromLocalState() {
+      if (!isWelcomeEmptyConversation()) {
+        const activeConversation = conversations.find(item => item.id === activeConversationId);
+        topTitle.textContent = activeConversation && activeConversation.title ? activeConversation.title : "Claude Web";
+      }
+      renderSessions();
+    }
+
+    function touchConversationLocally(conversationId, options = {}) {
+      if (!conversationId) return null;
+      const nowIso = new Date().toISOString();
+      const current = conversations.find(item => item.id === conversationId) || { id: conversationId, title: "新对话", is_pinned: 0 };
+      const nextTitle = options.title !== undefined
+        ? options.title
+        : (options.titleHint && isDefaultConversationTitle(current.title))
+          ? deriveConversationTitleFromPrompt(options.titleHint)
+          : current.title;
+      const updated = upsertConversationLocal(conversationId, {
+        ...options,
+        title: nextTitle,
+        updated_at: options.updated_at || nowIso
+      });
+      refreshSidebarFromLocalState();
+      return updated;
+    }
+
+    async function fetchAllConversations() {
+      const all = [];
+      const seenIds = new Set();
+      let offset = 0;
+      let total = Infinity;
+
+      while (offset < total) {
+        const query = new URLSearchParams({
+          limit: String(CONVERSATIONS_PAGE_LIMIT),
+          offset: String(offset)
+        });
+        const data = await api("GET", "/api/conversations?" + query.toString());
+        const batch = Array.isArray(data.conversations) ? data.conversations : [];
+        const freshBatch = batch.filter(item => {
+          const id = String(item && item.id || "");
+          if (!id || seenIds.has(id)) return false;
+          seenIds.add(id);
+          return true;
+        });
+        all.push(...freshBatch);
+
+        const batchCount = batch.length;
+        const reportedTotal = Number(data.total);
+        if (Number.isFinite(reportedTotal) && reportedTotal >= 0) {
+          total = reportedTotal;
+        } else if (batchCount < CONVERSATIONS_PAGE_LIMIT) {
+          total = offset + batchCount;
+        }
+
+        if (!batchCount || !freshBatch.length || batchCount < CONVERSATIONS_PAGE_LIMIT) break;
+        offset += batchCount;
+      }
+
+      return sortConversationsForSidebar(all);
     }
 
     async function api(method, url, body, form = false) {
@@ -5756,6 +5959,18 @@
     function typesetMathNow(root, isCurrent = () => true) {
       if (!root || !hasRenderableMath(root)) return Promise.resolve();
 
+      if ((!window.MathJax || !MathJax.typesetPromise) && typeof window.loadMathJax === "function") {
+        return window.loadMathJax().then(() => {
+          if (!isCurrent() || !root.isConnected) return Promise.resolve();
+          return typesetMathNow(root, isCurrent);
+        }).catch(() => {
+          if (!isCurrent() || !root.isConnected) return Promise.resolve();
+          renderMathFallback(root);
+          revealPendingMathSources(root);
+          return Promise.resolve();
+        });
+      }
+
       if (window.MathJax && MathJax.typesetPromise) {
         mathRenderPromise = mathRenderPromise
           .catch(() => {})
@@ -5779,7 +5994,25 @@
     }
 
     function queueMathTypeset(root, options = {}) {
-      if (!root || !window.MathJax || !MathJax.typesetPromise) return;
+      if (!root || !hasRenderableMath(root)) return;
+
+      if ((!window.MathJax || !MathJax.typesetPromise) && typeof window.loadMathJax === "function") {
+        window.loadMathJax().then(() => {
+          if (!root.isConnected || !hasRenderableMath(root)) return;
+          queueMathTypeset(root, options);
+        }).catch(() => {
+          if (!root.isConnected) return;
+          renderMathFallback(root);
+          revealPendingMathSources(root);
+        });
+        return;
+      }
+
+      if (!window.MathJax || !MathJax.typesetPromise) {
+        renderMathFallback(root);
+        revealPendingMathSources(root);
+        return;
+      }
 
       const seq = ++mathRenderSeq;
       const preserveScroll = options.preserveScroll !== false;
@@ -5835,6 +6068,8 @@
             el.style.minHeight = el.offsetHeight ? el.offsetHeight + 'px' : '1.5em';
           }
         });
+        queueMathTypeset(root, options);
+      } else if (typeof window.loadMathJax === "function") {
         queueMathTypeset(root, options);
       } else {
         renderMathFallback(root);
@@ -6676,6 +6911,96 @@
       }).join("|");
     }
 
+    function getMessageRenderKey(msg, idx) {
+      const id = getMessageId(msg) || ("idx:" + idx);
+      const versions = Array.isArray(msg && msg._versions) ? msg._versions : [];
+      const previewImages = parseImagePreviewList(msg && msg.imagePreview);
+      const versionSig = versions.map(version => {
+        const content = version && version.content || "";
+        return [
+          getMessageId(version) || "",
+          content.length,
+          content.slice(0, 24),
+          content.slice(-24),
+          version && version.model || "",
+          version && version.providerName || ""
+        ].join(":");
+      }).join("|");
+      const content = msg && msg.content || "";
+      return [
+        id,
+        msg && msg.role || "",
+        content.length,
+        content.slice(0, 48),
+        content.slice(-48),
+        msg && msg.fileName || "",
+        previewImages.join("|"),
+        msg && msg.sources || "",
+        msg && msg.model || "",
+        msg && msg.providerName || "",
+        msg && msg.tokenCount || "",
+        msg && msg.supersededBy || "",
+        versionSig,
+        pendingSearchKeyword && getMessageId(msg) === String(pendingJumpMessageId || "") ? pendingSearchKeyword : ""
+      ].join("\u001f");
+    }
+
+    function reconcileRenderedMessages(displayMessages, jobId) {
+      const wraps = Array.from(chatList.querySelectorAll(":scope > .msg-wrap"));
+      const nextKeys = displayMessages.map((msg, idx) => getMessageRenderKey(msg, idx));
+      const nextIds = displayMessages.map((msg, idx) => getMessageId(msg) || ("idx:" + idx));
+      const existingKeys = wraps.map(wrap => wrap.dataset.renderKey || "");
+      const existingIds = wraps.map(wrap => wrap.dataset.msgId || "");
+
+      let prefix = 0;
+      while (
+        prefix < wraps.length &&
+        prefix < displayMessages.length &&
+        existingIds[prefix] === nextIds[prefix] &&
+        existingKeys[prefix] === nextKeys[prefix]
+      ) {
+        prefix += 1;
+      }
+
+      let suffix = 0;
+      while (
+        suffix < wraps.length - prefix &&
+        suffix < displayMessages.length - prefix &&
+        existingIds[wraps.length - 1 - suffix] === nextIds[displayMessages.length - 1 - suffix] &&
+        existingKeys[wraps.length - 1 - suffix] === nextKeys[displayMessages.length - 1 - suffix]
+      ) {
+        suffix += 1;
+      }
+
+      const start = prefix;
+      const endExisting = wraps.length - suffix;
+      const endNext = displayMessages.length - suffix;
+      const anchor = wraps[endExisting] || null;
+      const fragment = document.createDocumentFragment();
+      for (let i = start; i < endNext; i += 1) {
+        const wrap = createMessageElement(displayMessages[i], i, true);
+        wrap.dataset.renderKey = nextKeys[i];
+        fragment.appendChild(wrap);
+      }
+
+      for (let i = start; i < endExisting; i += 1) {
+        if (wraps[i] && wraps[i].parentNode === chatList) {
+          chatList.removeChild(wraps[i]);
+        }
+      }
+      chatList.insertBefore(fragment, anchor);
+      scheduleMessageEnhancements(jobId);
+    }
+
+    function computeMessageTailWindow(total, limit = MESSAGE_TAIL_LIMIT) {
+      const safeTotal = Math.max(0, Number(total) || 0);
+      const safeLimit = Math.max(1, Number(limit) || MESSAGE_TAIL_LIMIT);
+      return {
+        limit: safeLimit,
+        offset: Math.max(0, safeTotal - safeLimit)
+      };
+    }
+
     function renderMessages(forceScroll = false) {
       const jobId = ++renderMessagesJob;
 
@@ -6703,14 +7028,20 @@
       }
       lastRenderedMsgKey = newKey;
 
-      chatList.innerHTML = "";
+      if (!chatList.children.length || chatList.querySelector(".empty")) {
+        chatList.innerHTML = "";
 
-      const fragment = document.createDocumentFragment();
-      displayMessages.forEach((msg, idx) => {
-        fragment.appendChild(createMessageElement(msg, idx, true));
-      });
-      chatList.appendChild(fragment);
-      scheduleMessageEnhancements(jobId);
+        const fragment = document.createDocumentFragment();
+        displayMessages.forEach((msg, idx) => {
+          const wrap = createMessageElement(msg, idx, true);
+          wrap.dataset.renderKey = getMessageRenderKey(msg, idx);
+          fragment.appendChild(wrap);
+        });
+        chatList.appendChild(fragment);
+        scheduleMessageEnhancements(jobId);
+      } else {
+        reconcileRenderedMessages(displayMessages, jobId);
+      }
 
       if (shouldAutoScroll) {
         scrollToBottomIfNeeded(forceScroll);
@@ -7645,8 +7976,7 @@
         pin.onclick = async e => {
           e.stopPropagation();
           await api("POST", `/api/conversations/${c.id}/pin`, { pinned: !c.is_pinned });
-          const d = await api("GET", "/api/conversations");
-          conversations = d.conversations || [];
+          setConversationsState(await fetchAllConversations());
           renderSessions();
         };
 
@@ -7884,9 +8214,7 @@
     }
 
     async function loadConversations() {
-      const d = await api("GET", "/api/conversations");
-      conversations = d.conversations || [];
-      invalidateSessionsRender();
+      setConversationsState(await fetchAllConversations());
 
       if (!conversations.length) {
         const c = await api("POST", "/api/conversations", { title: "新对话" });
@@ -7907,13 +8235,47 @@
       }
 
       localStorage.setItem("active_conversation", activeConversationId);
+      renderSessions();
       await loadMessages();
       renderAll();
     }
 
+    async function fetchMessagesPage(conversationId, options = {}) {
+      const params = new URLSearchParams();
+      if (Number.isFinite(options.limit) && options.limit > 0) params.set("limit", String(options.limit));
+      if (Number.isFinite(options.offset) && options.offset > 0) params.set("offset", String(options.offset));
+      const query = params.toString();
+      return api("GET", `/api/conversations/${conversationId}/messages${query ? "?" + query : ""}`);
+    }
+
     async function loadMessages() {
-      const d = await api("GET", `/api/conversations/${activeConversationId}/messages`);
-      messages = d.messages || [];
+      const d = await fetchMessagesPage(activeConversationId);
+      messages = Array.isArray(d.messages) ? d.messages : [];
+    }
+
+    async function refreshMessagesTail(options = {}) {
+      if (!activeConversationId) return false;
+      const totalKnown = messages.length;
+      const limit = Math.max(8, Number(options.limit) || 12);
+      const offset = Math.max(0, Number.isFinite(options.offset) ? options.offset : totalKnown - limit);
+
+      try {
+        const d = await fetchMessagesPage(activeConversationId, { limit, offset });
+        const tail = Array.isArray(d.messages) ? d.messages : [];
+        if (!tail.length) return false;
+
+        const reportedTotal = Number(d.total);
+        const paginationIgnored = (offset > 0 && tail.length > limit) || (Number.isFinite(reportedTotal) && reportedTotal === tail.length);
+        if (offset === 0 || paginationIgnored || totalKnown <= offset) {
+          messages = tail;
+          return true;
+        }
+
+        messages = messages.slice(0, offset).concat(tail);
+        return true;
+      } catch (_) {
+        return false;
+      }
     }
 
     async function loadProfiles(options = {}) {
@@ -7953,8 +8315,8 @@
       if (!activeConversationId) {
         const c = await api("POST", "/api/conversations", { title: "新对话" });
         activeConversationId = c.id;
-        conversations.unshift({ id: c.id, title: "新对话", created_at: Date.now(), updated_at: Date.now(), is_pinned: 0 });
-        invalidateSessionsRender();
+        const now = new Date().toISOString();
+        upsertConversationLocal(c.id, { id: c.id, title: "新对话", created_at: now, updated_at: now, is_pinned: 0 });
         localStorage.setItem("active_conversation", activeConversationId);
       }
 
@@ -7977,6 +8339,8 @@
 
         imagePreview = localImgs.length ? localImgs : null;
       }
+
+      const sendStartIndex = messages.length;
 
       messages.push({ role: "user", content: text, fileName, imagePreview });
       pendingSentMessageAnimationKey = "idx:" + (messages.length - 1);
@@ -8072,9 +8436,14 @@
         flushStreamingAssistantUpdate(true);
 
         clearSelectedFiles();
-
-        await loadConversations();
-        await loadMessages();
+        const refreshed = await refreshMessagesTail({
+          offset: Math.max(0, sendStartIndex - 2),
+          limit: Math.max(12, messages.length - Math.max(0, sendStartIndex - 2) + 2),
+        }).catch(() => false);
+        if (!refreshed) {
+          await loadMessages();
+        }
+        touchConversationLocally(activeConversationId, { titleHint: text });
         lastRenderedMsgKey = "";
         renderAll();
       } catch (e) {
@@ -8167,6 +8536,15 @@
           })
         });
 
+        if (!resp.ok) {
+          const errorText = await resp.text().catch(() => "");
+          throw new Error(`HTTP ${resp.status}: ${errorText || resp.statusText}`);
+        }
+
+        if (!resp.body || !resp.body.getReader) {
+          throw new Error("响应为空");
+        }
+
         const reader = resp.body.getReader();
         const decoder = new TextDecoder("utf-8");
         let full = "";
@@ -8180,8 +8558,13 @@
         }
 
         flushStreamingAssistantUpdate(true);
-
-        await loadMessages();
+        touchConversationLocally(activeConversationId);
+        const tailOffset = Math.max(0, idx - 1);
+        const tailLimit = Math.max(12, messages.length - tailOffset + 4);
+        const refreshed = await refreshMessagesTail({ offset: tailOffset, limit: tailLimit });
+        if (!refreshed) {
+          await loadMessages();
+        }
         lastRenderedMsgKey = "";
         renderAll();
       } catch (e) {
@@ -8211,6 +8594,23 @@
       }
       drawer.classList.remove("open");
       overlay.classList.remove("open");
+    }
+
+    function clearTransientUiLocks() {
+      if (overlay) overlay.classList.remove("open");
+      if (drawer) drawer.classList.remove("open");
+      if (codePreviewBackdrop && !codePreviewBackdrop.classList.contains("open")) {
+        codePreviewBackdrop.setAttribute("aria-hidden", "true");
+      }
+      if (systemPromptEditor && !systemPromptEditor.classList.contains("open")) {
+        systemPromptEditor.setAttribute("aria-hidden", "true");
+      }
+      if (!document.querySelector(".code-preview-backdrop.open, .system-edit-backdrop.open")) {
+        document.body.classList.remove("modal-open");
+      }
+      if (codePreviewBackdrop && !codePreviewBackdrop.classList.contains("open")) {
+        document.body.style.overflow = "";
+      }
     }
 
     function exportConversation(conversationId) {
@@ -8261,15 +8661,14 @@
 
       try {
         const c = await api("POST", "/api/conversations", { title: "新对话" });
-        const now = Date.now();
+        const now = new Date().toISOString();
         activeConversationId = c.id;
         messages = [];
-        conversations = [
+        setConversationsState([
           { id: c.id, title: "新对话", created_at: now, updated_at: now, is_pinned: 0 },
           ...conversations.filter(item => item.id !== c.id)
-        ];
+        ]);
         localStorage.setItem("active_conversation", activeConversationId);
-        invalidateSessionsRender();
         renderAll();
         closeDrawer();
       } catch (e) {
@@ -8468,10 +8867,19 @@
         closeConversationSearch();
         return;
       }
+      if (e.key === "Escape" && drawer && drawer.classList.contains("open")) {
+        closeDrawer();
+        return;
+      }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f") {
         e.preventDefault();
         openConversationSearch();
       }
+    });
+
+    window.addEventListener("pageshow", clearTransientUiLocks);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) clearTransientUiLocks();
     });
 
     if (conversationSearchToggle) {
@@ -8632,7 +9040,6 @@
 
     async function initPage() {
       const seq = ++loadSeq;
-      chatList.innerHTML = "";
       const fallbackTimer = setTimeout(() => {
         if (seq === loadSeq && !isLocalAndroidRuntime) {
             showLoadError("页面初始化超时，请点击重试");
@@ -8640,13 +9047,17 @@
       }, 8000);
 
       try {
-        await loadProfiles();
-        await loadSystemPrompts();
+        const [profilesResult, promptsResult] = await Promise.all([
+          loadProfiles(),
+          loadSystemPrompts()
+        ]);
         if (seq !== loadSeq) return;
         restoreModel();
         loadProviderModels();
         setModelChoicesCollapsed(localStorage.getItem("model_choices_collapsed") !== "0");
+
         await loadConversations();
+        removeSkeleton();
       } catch (e) {
         if (seq === loadSeq) showLoadError(e.message || String(e));
       } finally {
@@ -8658,7 +9069,7 @@
 
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/static/sw.js?v=19").catch(() => {});
+        navigator.serviceWorker.register("/static/sw.js?v=20").catch(() => {});
       });
     }
   </script>

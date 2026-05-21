@@ -29,7 +29,10 @@ vm.runInContext(
     extractFunction("getClosedFenceRanges"),
     extractFunction("isInsideRanges"),
     extractFunction("findLastUnclosedMathDelimiter"),
-    extractFunction("splitStableStreamingMarkdown")
+    extractFunction("findLastUnclosedInlineMarkdown"),
+    extractFunction("splitStableStreamingMarkdown"),
+    "const MESSAGE_TAIL_LIMIT = 120;",
+    extractFunction("computeMessageTailWindow")
   ].join("\n"),
   sandbox
 );
@@ -97,6 +100,7 @@ function createBufferedRenderSandbox({ math = true } = {}) {
     clientWidth: 640,
     innerHTML: "previous-rendered",
     isConnected: true,
+    classList: { toggle() {} },
     closest() { return null; }
   };
   const stagingNodes = [];
@@ -120,6 +124,7 @@ function createBufferedRenderSandbox({ math = true } = {}) {
         return {
           tag,
           className: "",
+          classList: { toggle() {} },
           style: { cssText: "" },
           innerHTML: "",
           clientWidth: 640,
@@ -163,6 +168,7 @@ function createBufferedRenderSandbox({ math = true } = {}) {
     applyMessageCollapse: () => {},
     renderMarkdown: text => text,
     renderStreamingMarkdown: text => text,
+    renderStreamingMarkdownSegmented: text => text,
     renderThinkingHtml: () => "",
     renderToolStatusesHtml: () => "",
     renderSourcesStrip: () => "",
@@ -410,6 +416,34 @@ for (const testCase of domCases) {
   }
 }
 
+const tailWindowCases = [
+  {
+    name: "tail window clamps to latest page",
+    input: [350, 120],
+    expected: { offset: 230, limit: 120 }
+  },
+  {
+    name: "tail window keeps zero offset for short history",
+    input: [40, 120],
+    expected: { offset: 0, limit: 120 }
+  },
+  {
+    name: "tail window normalizes invalid values",
+    input: ["bad", 0],
+    expected: { offset: 0, limit: 120 }
+  }
+];
+
+for (const testCase of tailWindowCases) {
+  const actual = sandbox.computeMessageTailWindow(...testCase.input);
+  if (actual.offset !== testCase.expected.offset || actual.limit !== testCase.expected.limit) {
+    failures += 1;
+    console.error(`FAIL ${testCase.name}`);
+    console.error("actual:", JSON.stringify(actual));
+    console.error("expect:", JSON.stringify(testCase.expected));
+  }
+}
+
 async function runAsyncCases() {
   const buffered = createBufferedRenderSandbox();
   const promise = buffered.renderAssistantBubbleBuffered(buffered.bubble, "公式 \\(x+1\\)", [], false, false);
@@ -449,5 +483,5 @@ runAsyncCases().then(() => {
     process.exit(1);
   }
 
-  console.log(`streaming math render tests passed (${cases.length + domCases.length + 4})`);
+  console.log(`streaming math render tests passed (${cases.length + domCases.length + tailWindowCases.length + 4})`);
 });
