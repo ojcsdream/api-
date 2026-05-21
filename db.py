@@ -366,12 +366,18 @@ def db_get_regenerate_history(conversation_id: str) -> list[MessageItem]:
     return db_get_messages(conversation_id)
 
 
-def db_get_messages(conversation_id: str) -> list[MessageItem]:
+def db_get_messages(conversation_id: str, limit: int = 0, offset: int = 0) -> list[MessageItem]:
     conn = get_conn()
-    rows = conn.execute(
-        "SELECT id, role, content, file_name, image_preview, file_context, model, provider_name, token_count, superseded_by, sources FROM messages WHERE conversation_id=? ORDER BY id ASC",
-        (conversation_id,),
-    ).fetchall()
+    if limit > 0:
+        rows = conn.execute(
+            "SELECT id, role, content, file_name, image_preview, file_context, model, provider_name, token_count, superseded_by, sources FROM messages WHERE conversation_id=? ORDER BY id ASC LIMIT ? OFFSET ?",
+            (conversation_id, limit, offset),
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            "SELECT id, role, content, file_name, image_preview, file_context, model, provider_name, token_count, superseded_by, sources FROM messages WHERE conversation_id=? ORDER BY id ASC",
+            (conversation_id,),
+        ).fetchall()
     conn.close()
 
     return [message_item_from_row(row) for row in rows]

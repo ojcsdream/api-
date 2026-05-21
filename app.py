@@ -187,7 +187,7 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 def index():
     return FileResponse(
         STATIC_DIR / "index.html",
-        headers={"Cache-Control": "no-store, max-age=0"},
+        headers={"Cache-Control": "no-cache, must-revalidate"},
     )
 
 
@@ -195,7 +195,7 @@ def index():
 def lite_index():
     return FileResponse(
         STATIC_DIR / "lite.html",
-        headers={"Cache-Control": "no-store, max-age=0"},
+        headers={"Cache-Control": "no-cache, must-revalidate"},
     )
 
 
@@ -507,15 +507,20 @@ def search_messages(q: str = "", conversation_id: str = "", scope: str = "all", 
 
 
 @app.get("/api/conversations")
-def list_conversations():
+def list_conversations(limit: int = 200, offset: int = 0):
     conn = get_conn()
     rows = conn.execute(
-        "SELECT id, title, created_at, updated_at, is_pinned FROM conversations ORDER BY is_pinned DESC, updated_at DESC"
+        "SELECT id, title, created_at, updated_at, is_pinned FROM conversations ORDER BY is_pinned DESC, updated_at DESC LIMIT ? OFFSET ?",
+        (limit, offset),
     ).fetchall()
+    total = conn.execute("SELECT COUNT(*) FROM conversations").fetchone()[0]
     conn.close()
     return {
         "ok": True,
         "conversations": [dict(row) for row in rows],
+        "total": total,
+        "limit": limit,
+        "offset": offset,
     }
 
 
@@ -526,8 +531,8 @@ def create_conversation(body: ConversationCreateBody):
 
 
 @app.get("/api/conversations/{conversation_id}/messages")
-def get_conversation_messages(conversation_id: str):
-    msgs = db_get_messages(conversation_id)
+def get_conversation_messages(conversation_id: str, limit: int = 0, offset: int = 0):
+    msgs = db_get_messages(conversation_id, limit=limit, offset=offset)
     return {
         "ok": True,
         "messages": [m.model_dump() if hasattr(m, "model_dump") else m.dict() for m in msgs],
